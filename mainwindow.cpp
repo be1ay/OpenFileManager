@@ -5,6 +5,9 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QComboBox>
+#include <QPluginLoader>
+#include "FilePluginInterface.h"
+#include <QApplication>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -15,9 +18,50 @@ MainWindow::MainWindow(QWidget *parent)
     updateActiveStyles();
 
     connectSignals();
+    loadPlugins();
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow()
+{
+    unloadPlugins();
+}
+
+void MainWindow::loadPlugins()
+{
+    QDir pluginsDir(qApp->applicationDirPath() + "/plugins");
+    const QStringList entryList = pluginsDir.entryList(QDir::Files);
+    for (const QString &fileName : entryList) {
+        QString fullPath = pluginsDir.absoluteFilePath(fileName);
+        QPluginLoader *loader = new QPluginLoader(fullPath, this);
+        QObject *pluginObj = loader->instance();
+        if (pluginObj) {
+            auto iface = qobject_cast<FilePluginInterface *>(pluginObj);
+            if (iface) {
+                plugins << iface;
+                pluginLoaders << loader;
+                qDebug() << "Loaded plugin:" << iface->name();
+            } else {
+                delete loader;
+            }
+        } else {
+            qDebug() << "Failed to load plugin:" << fileName << loader->errorString();
+            delete loader;
+        }
+    }
+}
+
+void MainWindow::unloadPlugins()
+{
+    for (QPluginLoader *loader : std::as_const(pluginLoaders)) {
+        qDebug() << "Unloading plugin:" << loader->fileName();
+        loader->unload(); // выгрузить .dll/.so
+        delete loader;    // удалить loader
+    }
+    pluginLoaders.clear();
+    plugins.clear();
+}
+
+
 
 void MainWindow::setupUi()
 {

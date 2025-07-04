@@ -8,6 +8,8 @@
 #include <QVBoxLayout>
 #include <QLabel>
 class QComboBox;
+class FilePluginInterface;
+class QPluginLoader;
 
 class MainWindow : public QMainWindow
 {
@@ -16,6 +18,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void loadPlugins();
+    void unloadPlugins();
 protected:
     void focusInEvent(QFocusEvent *event);
 
@@ -41,6 +45,8 @@ private:
     QPushButton *newFolderBtn;
     QComboBox *leftDriveBox;
     QComboBox *rightDriveBox;
+    QList<FilePluginInterface*> plugins;
+    QList<QPluginLoader*> pluginLoaders;
 
 private slots:
     void onCopy();
