@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(ExamplePlugin)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 find_package(Qt5 REQUIRED COMPONENTS Core)
 
 set(CMAKE_AUTOMOC ON)
@@ -13,7 +13,7 @@ add_library(ExamplePlugin SHARED
     examplePlugin.h
 )
 
-target_link_libraries(ExamplePlugin Qt5::Core Qt5::Widgets)
+target_link_libraries(ExamplePlugin Qt6::Core Qt6::Widgets)
 
 # Задаём префикс и суффикс для плагина, как требует Qt
 set_target_properties(ExamplePlugin PROPERTIES
