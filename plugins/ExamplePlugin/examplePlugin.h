@@ -4,6 +4,7 @@
 #include <QObject>
 #include "FilePluginInterface.h"
 
+class QLabel;
 class ExamplePlugin : public QObject, public FilePluginInterface
 {
     Q_OBJECT
@@ -13,6 +14,14 @@ class ExamplePlugin : public QObject, public FilePluginInterface
 public:
     QString name() const override { return "Example Plugin"; }
     void execute(const QString &filePath) override;
+    QIcon icon() const override;
+    void setApplicationAPI(ApplicationAPI *api) override { this->m_api = api; }
+    bool showWidget() const override { return true; }
+
+    QWidget* createWidget() override;
+private:
+    ApplicationAPI *m_api = nullptr;
+    QLabel *m_widget = nullptr;
 };
 
 #endif // EXAMPLEPLUGIN_H

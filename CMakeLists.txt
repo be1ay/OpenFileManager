@@ -19,6 +19,8 @@ add_executable(FileManagerQt
     FilePanel.cpp
     FileOperations.h
     FileOperations.cpp
+	ApplicationAPI.h
+    resources.qrc
 )
 
 target_link_libraries(FileManagerQt Qt6::Widgets)
