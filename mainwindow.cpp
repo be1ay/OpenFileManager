@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include "FilePanel.h"
-#include "FileOperations.h"
+
 #include "FilePluginInterface.h"
 
 #include <QVBoxLayout>
@@ -23,10 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
 
     createPluginToolbar();
-
-
     setupUi();
-        loadPlugins();
+    loadPlugins();
 
     // По умолчанию – левая панель
     currentActiveView = leftPanel->view();
@@ -93,16 +91,16 @@ void MainWindow::setupUi()
     panelsLayout->addWidget(rightPanel);
 
     // Кнопки действий
-    auto *btnLayout = new QHBoxLayout;
-    copyBtn      = new QPushButton(tr("Copy"), this);
+    m_btnLayout  = new QHBoxLayout();
+    /*copyBtn    = new QPushButton(tr("Copy"), this);
     deleteBtn    = new QPushButton(tr("Delete"), this);
     newFolderBtn = new QPushButton(tr("New Folder"), this);
-    btnLayout->addWidget(copyBtn);
-    btnLayout->addWidget(deleteBtn);
-    btnLayout->addWidget(newFolderBtn);
+    m_btnLayout->addWidget(copyBtn);
+    m_btnLayout->addWidget(deleteBtn);
+    m_btnLayout->addWidget(newFolderBtn);*/
 
     mainLayout->addLayout(panelsLayout);
-    mainLayout->addLayout(btnLayout);
+    mainLayout->addLayout(m_btnLayout);
 
     setCentralWidget(central);
     resize(900, 600);
@@ -111,9 +109,7 @@ void MainWindow::setupUi()
 
 void MainWindow::connectSignals()
 {
-    connect(copyBtn,      &QPushButton::clicked, this, &MainWindow::onCopy);
-    connect(deleteBtn,    &QPushButton::clicked, this, &MainWindow::onDelete);
-    connect(newFolderBtn, &QPushButton::clicked, this, &MainWindow::onNewFolder);
+
 
     // Выбор активной панели по клику
     connect(leftPanel->view(), &QTreeView::clicked, this, [this](const QModelIndex&){
@@ -172,12 +168,17 @@ void MainWindow::loadPlugins()
             if (w) addDockWidgetForPlugin(iface, w, iface->name());
         }
 
-        // добавить кнопку на тулбар — при клике вызываем execute()
-        QAction *act = m_pluginToolBar->addAction(iface->icon().isNull() ? QIcon(":/icons/default_plugin.png") : iface->icon(), iface->name());
-        connect(act, &QAction::triggered, this, [this, iface]() {
-            QString path = currentFilePath();
-            iface->execute(path); // плагин при showWidget==true должен вызвать api->showDockForPlugin(this)
-        });
+        if(!iface->backgroundPlugin()){
+            // добавить кнопку на тулбар — при клике вызываем execute()
+            QAction *act = m_pluginToolBar->addAction(iface->icon().isNull() ? QIcon(":/icons/default_plugin.png") : iface->icon(), iface->name());
+            connect(act, &QAction::triggered, this, [this, iface]() {
+                QString path = currentFilePath();
+                iface->execute(path); // плагин при showWidget==true должен вызвать api->showDockForPlugin(this)
+            });
+        }
+        else{
+            iface->execute(currentFilePath());
+        }
 
         qDebug() << "Loaded plugin:" << iface->name();
     }
@@ -264,101 +265,14 @@ void MainWindow::removePluginDock(FilePluginInterface *plugin)
     m_pluginDocks.remove(plugin);
 }
 
+QHBoxLayout* MainWindow::footerBtnPanel() const
+{
+    return m_btnLayout;
+}
+
 
 void MainWindow::focusInEvent(QFocusEvent *ev)
 {
     QMainWindow::focusInEvent(ev);
     updateActiveStyles();
-}
-
-void MainWindow::onDelete()
-{
-    auto *view  = qobject_cast<QTreeView*>(activeView());
-    auto *model = qobject_cast<QFileSystemModel*>(view->model());
-    const auto sel = view->selectionModel()->selectedRows();
-
-    if (sel.isEmpty()) {
-        QMessageBox::information(this, "Delete", "No selection.");
-        return;
-    }
-
-    int count = 0;
-    for (auto idx : sel) {
-        QString path = model->filePath(idx);
-        if (FileOperations::removePath(path))
-            ++count;
-        else
-            QMessageBox::warning(this, "Error", "Failed to delete: " + path);
-    }
-
-    QMessageBox::information(this, "Deleted", QString("Deleted %1 items.").arg(count));
-    // Обновить текущее отображение
-    QString root = model->filePath(view->rootIndex());
-    view->setRootIndex(model->index(root));
-}
-
-void MainWindow::onCopy()
-{
-    auto *srcView = qobject_cast<QTreeView*>(activeView());
-    auto *dstView = qobject_cast<QTreeView*>(passiveView());
-
-    auto *srcModel = qobject_cast<QFileSystemModel*>(srcView->model());
-    auto *dstModel = qobject_cast<QFileSystemModel*>(dstView->model());
-
-    QString dstDir = dstModel->filePath(dstView->rootIndex());
-    if (dstDir.isEmpty()) {
-        QMessageBox::warning(this, "Copy", "No destination.");
-        return;
-    }
-
-    const auto sel = srcView->selectionModel()->selectedRows();
-    if (sel.isEmpty()) {
-        QMessageBox::warning(this, "Copy", "No items selected.");
-        return;
-    }
-
-    int count = 0;
-    for (auto idx : sel) {
-        QString srcPath = srcModel->filePath(idx);
-        QFileInfo info(srcPath);
-        QString dstPath = dstDir + "/" + info.fileName();
-
-        bool ok = false;
-        if (info.isDir()) {
-            ok = FileOperations::copyDirectoryRecursively(srcPath, dstPath);
-        } else {
-            if (QFile::exists(dstPath)) {
-                QFile::remove(dstPath); // перезаписать
-            }
-            ok = QFile::copy(srcPath, dstPath);
-        }
-
-        if (ok) ++count;
-        else QMessageBox::warning(this, "Error", "Failed to copy: " + srcPath);
-    }
-
-    QMessageBox::information(
-        this, "Copy", QString("Copied %1 items to:\n%2").arg(count).arg(dstDir));
-}
-
-
-void MainWindow::onNewFolder()
-{
-    auto *view  = qobject_cast<QTreeView*>(activeView());
-    auto *model = qobject_cast<QFileSystemModel*>(view->model());
-    QString dir = model->filePath(view->rootIndex());
-
-    bool ok;
-    QString name = QInputDialog::getText(
-        this, "New Folder", "Enter name:", QLineEdit::Normal, "New Folder", &ok);
-
-    if (!ok || name.isEmpty())
-        return;
-
-    if (QDir(dir).mkdir(name)) {
-        QMessageBox::information(this, "Folder", "Created.");
-        view->setRootIndex(model->index(dir));
-    } else {
-        QMessageBox::warning(this, "Folder", "Could not create folder.");
-    }
 }

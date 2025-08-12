@@ -17,8 +17,6 @@ add_executable(FileManagerQt
     FilePluginInterface.h
     FilePanel.h
     FilePanel.cpp
-    FileOperations.h
-    FileOperations.cpp
 	ApplicationAPI.h
     resources.qrc
 )
@@ -31,8 +29,10 @@ add_subdirectory(plugins)
 set(PLUGINS_OUTPUT_DIR "${CMAKE_BINARY_DIR}/plugins")
 file(MAKE_DIRECTORY ${PLUGINS_OUTPUT_DIR})
 
-add_custom_command(TARGET FileManagerQt POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:ExamplePlugin>
-        ${PLUGINS_OUTPUT_DIR}
-)
+foreach(plugin_target IN LISTS PLUGIN_TARGETS)
+    add_custom_command(TARGET FileManagerQt POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:${plugin_target}>
+            ${PLUGINS_OUTPUT_DIR}
+    )
+endforeach()

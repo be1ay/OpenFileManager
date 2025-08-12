@@ -17,6 +17,7 @@ public:
     // плагин говорит, нужен ли ему виджет (QDock)
     virtual bool showWidget() const = 0;
 
+    virtual bool backgroundPlugin() const = 0;
     // должен вернуть QWidget* (parent == nullptr)
     virtual QWidget* createWidget() = 0;
 

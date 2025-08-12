@@ -6,9 +6,7 @@ void ExamplePlugin::execute(const QString &filePath)
 {
     if (m_api) {
         m_api->showMessage("Plugin got file: " + filePath);
-        if (showWidget()) {
-            m_api->showDockForPlugin(this); // попросить MainWindow показать док
-        }
+        m_api->showDockForPlugin(this); // попросить MainWindow показать док
     }
 }
 

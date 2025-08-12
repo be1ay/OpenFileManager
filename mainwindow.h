@@ -12,6 +12,7 @@ class FilePanel;
 class FilePluginInterface;
 class QToolBar;
 class QDockWidget;
+class QHBoxLayout;
 
 class MainWindow : public QMainWindow, public ApplicationAPI
 {
@@ -26,14 +27,11 @@ public:
     void addDockWidgetForPlugin(FilePluginInterface *plugin, QWidget *widget, const QString &title);
     void showDockForPlugin(FilePluginInterface *plugin) override;
     void removePluginDock(FilePluginInterface *plugin);
-
+    QHBoxLayout* footerBtnPanel() const override;
+    QWidget* activeView()  const override;
+    QWidget* passiveView() const override;
 protected:
     void focusInEvent(QFocusEvent *event) override;
-
-private slots:
-    void onCopy();
-    void onDelete();
-    void onNewFolder();
 
 private:
     void setupUi();
@@ -44,16 +42,17 @@ private:
     void updateActiveStyles();
     void createPluginToolbar();
 
-    QWidget*            activeView()  const;
-    QWidget*            passiveView() const;
+
+
 
     FilePanel          *leftPanel;
     FilePanel          *rightPanel;
     QWidget            *currentActiveView;
 
-    QPushButton        *copyBtn;
-    QPushButton        *deleteBtn;
-    QPushButton        *newFolderBtn;
+    QHBoxLayout        *m_btnLayout;
+   // QPushButton        *copyBtn;
+   // QPushButton        *deleteBtn;
+   // QPushButton        *newFolderBtn;
 
     QVector<QPluginLoader*>       pluginLoaders;
     QVector<FilePluginInterface*> plugins;
