@@ -8,8 +8,6 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 add_executable(FileManagerQt
     main.cpp
     mainwindow.cpp
@@ -21,6 +19,7 @@ add_executable(FileManagerQt
     resources.qrc
 )
 
+target_include_directories(FileManagerQt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(FileManagerQt Qt6::Widgets)
 
 

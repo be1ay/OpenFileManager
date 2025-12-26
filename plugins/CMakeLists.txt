@@ -1,11 +1,12 @@
-# plugins/CMakeLists.txt
-set(PLUGIN_TARGETS "")
-
+# Очищаем список в текущей области видимости
+set(LOCAL_PLUGINS "")
+include_directories("${CMAKE_SOURCE_DIR}")
 add_subdirectory(ExamplePlugin)
-list(APPEND PLUGIN_TARGETS ExamplePlugin)
+list(APPEND LOCAL_PLUGINS ExamplePlugin)
 
 add_subdirectory(FileOperationsBtn)
-list(APPEND PLUGIN_TARGETS FileOperationsBtn)
+list(APPEND LOCAL_PLUGINS FileOperationsBtn)
 
-# Передаем список в родительский CMake
-set(PLUGIN_TARGETS ${PLUGIN_TARGETS} PARENT_SCOPE)
+# Передаем итоговый список наверх в основной CMakeLists.txt
+set(PLUGIN_TARGETS ${LOCAL_PLUGINS} PARENT_SCOPE)
+

@@ -1,4 +1,4 @@
-#include "MainWindow.h"
+#include "mainwindow.h"
 #include "FilePanel.h"
 
 #include "FilePluginInterface.h"
