@@ -104,7 +104,7 @@ void MainWindow::setupUi()
 
     setCentralWidget(central);
     resize(900, 600);
-    setWindowTitle("Qt File Manager");
+    setWindowTitle("Belkin Commander");
 }
 
 void MainWindow::connectSignals()
