@@ -1,8 +1,9 @@
-#include "FilePanel.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QDir>
 #include <QFileInfo>
+#include <QMenu>
+#include "FilePanel.h"
 
 FilePanel::FilePanel(QWidget *parent)
     : QWidget(parent)
@@ -18,6 +19,7 @@ FilePanel::FilePanel(QWidget *parent)
     m_view->setRootIsDecorated(false);
     m_view->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_view->setColumnWidth(0, 250);
+    m_view->setContextMenuPolicy(Qt::CustomContextMenu);
 
     // Инициализация пути
     m_currentPath = QDir::homePath();
@@ -47,6 +49,12 @@ FilePanel::FilePanel(QWidget *parent)
             this, &FilePanel::onDriveChanged);
     connect(m_view, &QTreeView::doubleClicked,
             this, &FilePanel::onItemActivated);
+
+    connect(m_view, &QWidget::customContextMenuRequested,
+        this, [this](const QPoint &pos) {
+            emit contextMenuRequested(m_view->viewport()->mapToGlobal(pos));
+        });
+
 }
 
 void FilePanel::populateDriveBox()
@@ -92,3 +100,4 @@ void FilePanel::onItemActivated(const QModelIndex &idx)
         emit pathChanged(path);
     }
 }
+

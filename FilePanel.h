@@ -7,6 +7,8 @@
 #include <QPushButton>
 #include <QComboBox>
 
+
+
 class FilePanel : public QWidget
 {
     Q_OBJECT
@@ -22,6 +24,8 @@ public:
 signals:
     // Посылается при переходе на новую папку
     void pathChanged(const QString &newPath);
+    void contextMenuRequested(const QPoint &globalPos);
+
 
 private slots:
     void onUpClicked();

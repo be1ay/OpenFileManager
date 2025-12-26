@@ -14,6 +14,8 @@
 #include <QDebug>
 #include <QToolBar>
 #include <QDockWidget>
+#include <QMenu>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -92,13 +94,6 @@ void MainWindow::setupUi()
 
     // Кнопки действий
     m_btnLayout  = new QHBoxLayout();
-    /*copyBtn    = new QPushButton(tr("Copy"), this);
-    deleteBtn    = new QPushButton(tr("Delete"), this);
-    newFolderBtn = new QPushButton(tr("New Folder"), this);
-    m_btnLayout->addWidget(copyBtn);
-    m_btnLayout->addWidget(deleteBtn);
-    m_btnLayout->addWidget(newFolderBtn);*/
-
     mainLayout->addLayout(panelsLayout);
     mainLayout->addLayout(m_btnLayout);
 
@@ -109,8 +104,6 @@ void MainWindow::setupUi()
 
 void MainWindow::connectSignals()
 {
-
-
     // Выбор активной панели по клику
     connect(leftPanel->view(), &QTreeView::clicked, this, [this](const QModelIndex&){
         setActivePanel(leftPanel->view());
@@ -126,6 +119,13 @@ void MainWindow::connectSignals()
     connect(rightPanel->view(), &QTreeView::doubleClicked, this, [this](const QModelIndex&){
         setActivePanel(rightPanel->view());
     });
+    // Контекстное меню
+    connect(leftPanel,  &FilePanel::contextMenuRequested,
+        this,       &MainWindow::showContextMenu);
+
+    connect(rightPanel, &FilePanel::contextMenuRequested,
+        this,       &MainWindow::showContextMenu);
+
 }
 
 void MainWindow::loadPlugins()
@@ -157,6 +157,8 @@ void MainWindow::loadPlugins()
 
         // важно: сначала дать API, чтобы createWidget() мог им пользоваться
         iface->setApplicationAPI(this);
+        iface->initialize();
+
 
         // сохранить
         plugins.append(iface);
@@ -172,12 +174,14 @@ void MainWindow::loadPlugins()
             // добавить кнопку на тулбар — при клике вызываем execute()
             QAction *act = m_pluginToolBar->addAction(iface->icon().isNull() ? QIcon(":/icons/default_plugin.png") : iface->icon(), iface->name());
             connect(act, &QAction::triggered, this, [this, iface]() {
-                QString path = currentFilePath();
-                iface->execute(path); // плагин при showWidget==true должен вызвать api->showDockForPlugin(this)
+                QStringList paths = selectedFiles();
+                iface->execute(paths);
+
             });
         }
         else{
-            iface->execute(currentFilePath());
+            QStringList paths = selectedFiles();
+            iface->execute(paths);
         }
 
         qDebug() << "Loaded plugin:" << iface->name();
@@ -190,6 +194,7 @@ void MainWindow::unloadPlugins()
         FilePluginInterface *p = plugins[i];
         // удалить док, если есть
         removePluginDock(p);
+        p->shutdown();
 
         QPluginLoader *loader = pluginLoaders[i];
         qDebug() << "Unloading plugin:" << loader->fileName();
@@ -275,4 +280,48 @@ void MainWindow::focusInEvent(QFocusEvent *ev)
 {
     QMainWindow::focusInEvent(ev);
     updateActiveStyles();
+}
+
+QStringList MainWindow::selectedFiles() const
+{
+    QStringList result;
+
+    auto *view = qobject_cast<QTreeView*>(activeView());
+    if (!view)
+        return result;
+
+    auto *model = qobject_cast<QFileSystemModel*>(view->model());
+    if (!model)
+        return result;
+
+    QModelIndexList rows = view->selectionModel()->selectedRows();
+
+    for (const QModelIndex &idx : rows) {
+        result << model->filePath(idx);
+    }
+
+    return result;
+}
+
+void MainWindow::addContextMenuAction(QAction *action)
+{
+    if (!action)
+        return;
+
+    m_contextActions.append(action);
+}
+
+void MainWindow::showContextMenu(const QPoint &globalPos)
+{
+    QMenu menu;
+
+    // системные действия (если нужны)
+    // menu.addAction("Открыть", ...);
+
+    // действия плагинов
+    for (QAction *act : m_contextActions) {
+        menu.addAction(act);
+    }
+
+    menu.exec(globalPos);
 }

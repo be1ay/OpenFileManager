@@ -6,6 +6,7 @@
 
 class FilePluginInterface;
 class QHBoxLayout;
+class QAction;
 
 class ApplicationAPI {
 public:
@@ -17,6 +18,9 @@ public:
     virtual QHBoxLayout* footerBtnPanel() const = 0;
     virtual QWidget* activeView()const = 0;
     virtual QWidget* passiveView() const = 0;
+    virtual QStringList selectedFiles() const = 0;
+    virtual void addContextMenuAction(QAction *action) = 0;
+
 };
 
 #endif // APPLICATIONAPI_H

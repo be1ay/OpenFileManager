@@ -13,7 +13,7 @@ class ExamplePlugin : public QObject, public FilePluginInterface
 
 public:
     QString name() const override { return "Example Plugin"; }
-    void execute(const QString &filePath) override;
+    void execute(const QStringList &files) override;
 
     QIcon icon() const override;
     void setApplicationAPI(ApplicationAPI *api) override { this->m_api = api; }
@@ -21,9 +21,14 @@ public:
     bool backgroundPlugin() const override { return false; }
 
     QWidget* createWidget() override;
+    void initialize() override;
+    void shutdown() override;
+
 private:
     ApplicationAPI *m_api = nullptr;
     QLabel *m_widget = nullptr;
+    QList<QAction*> m_actions;
+
 };
 
 #endif // EXAMPLEPLUGIN_H

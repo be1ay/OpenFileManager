@@ -14,7 +14,7 @@ class FileOperationsBtn : public QObject, public FilePluginInterface
 
 public:
     QString name() const override { return "FileOperationsBtn Plugin"; }
-    void execute(const QString &filePath) override;
+    void execute(const QStringList &files) override;
 
     QIcon icon() const override;
     void setApplicationAPI(ApplicationAPI *api) override { this->m_api = api; }

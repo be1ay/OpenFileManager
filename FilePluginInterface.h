@@ -22,10 +22,13 @@ public:
     virtual QWidget* createWidget() = 0;
 
     // основное действие
-    virtual void execute(const QString &filePath) = 0;
+    virtual void execute(const QStringList &files) = 0;
 
     // передача API (MainWindow)
     virtual void setApplicationAPI(ApplicationAPI *api) = 0;
+
+    virtual void initialize() {} // вызывается после setApplicationAPI() 
+    virtual void shutdown() {} // вызывается перед выгрузкой плагина
 };
 
 #define FilePluginInterface_iid "belkin.alexey.FilePluginInterface"

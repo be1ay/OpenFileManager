@@ -12,8 +12,10 @@
 #include <QFileSystemModel>
 
 
-void FileOperationsBtn::execute(const QString &filePath)
+void FileOperationsBtn::execute(const QStringList &files)
 {
+    Q_UNUSED(files)
+    
     if (m_api) {
         auto btn_panel= m_api->footerBtnPanel();
 

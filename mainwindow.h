@@ -5,6 +5,7 @@
 #include <QModelIndex>
 #include <QPluginLoader>
 #include <QMap>
+#include <QStringList>
 #include "ApplicationAPI.h"
 
 class QPushButton;
@@ -30,8 +31,14 @@ public:
     QHBoxLayout* footerBtnPanel() const override;
     QWidget* activeView()  const override;
     QWidget* passiveView() const override;
+    QStringList selectedFiles() const override;
+    void addContextMenuAction(QAction *action) override;
+
 protected:
     void focusInEvent(QFocusEvent *event) override;
+
+private slots:
+    void showContextMenu(const QPoint &globalPos);
 
 private:
     void setupUi();
@@ -41,18 +48,13 @@ private:
     void setActivePanel(QWidget *panelView);
     void updateActiveStyles();
     void createPluginToolbar();
-
-
-
+    QList<QAction*> m_contextActions;
 
     FilePanel          *leftPanel;
     FilePanel          *rightPanel;
     QWidget            *currentActiveView;
 
     QHBoxLayout        *m_btnLayout;
-   // QPushButton        *copyBtn;
-   // QPushButton        *deleteBtn;
-   // QPushButton        *newFolderBtn;
 
     QVector<QPluginLoader*>       pluginLoaders;
     QVector<FilePluginInterface*> plugins;
