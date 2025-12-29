@@ -17,11 +17,19 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.x.x'
-#      - run: sudo apt-get update && sudo apt-get install libboost-all-dev -y
-#      - run: cmake . -DPATCH_VERSION=${{ github.run_number }} -DWITH_BOOST_TEST=ON
-      - run: cmake . -DPATCH_VERSION=${{ github.run_number }}
-      - run: cmake --build .
+          version: '6.8.1'
+          cache: true
+      
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0
+
+      - name: Configure and Build
+        run: |
+          cmake -B build -S . -DPATCH_VERSION=${{ github.run_number }}
+          cmake --build build
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
