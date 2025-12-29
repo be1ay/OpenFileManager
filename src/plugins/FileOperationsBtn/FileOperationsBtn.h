@@ -22,6 +22,8 @@ public:
     bool backgroundPlugin() const override { return true; }
 
     QWidget* createWidget() override;
+signals:
+    void deleteRequested();
 
 private slots:
     void onCopy();

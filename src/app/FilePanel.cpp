@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QMenu>
+#include <QKeyEvent>
 #include "FilePanel.h"
 
 FilePanel::FilePanel(QWidget *parent)
@@ -99,5 +100,20 @@ void FilePanel::onItemActivated(const QModelIndex &idx)
         m_pathLabel->setText(path);
         emit pathChanged(path);
     }
+}
+
+void FilePanel::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Delete) {
+        emit deleteRequested();
+        return;
+    }
+    
+    if (event->key() == Qt::Key_F5) {
+         emit copyRequested();
+          return; 
+    }
+
+    QWidget::keyPressEvent(event);
 }
 

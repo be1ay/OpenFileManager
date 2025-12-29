@@ -7,6 +7,7 @@
 #include <QMap>
 #include <QStringList>
 #include "ApplicationAPI.h"
+#include "CopySignals.h"
 
 class QPushButton;
 class FilePanel;
@@ -33,12 +34,17 @@ public:
     QWidget* passiveView() const override;
     QStringList selectedFiles() const override;
     void addContextMenuAction(QAction *action) override;
+    CopySignals* copySignals() override { return &m_copySignals; }
+    void performCopyOperation();
+    QWidget* mainWindow() const override { return const_cast<MainWindow*>(this); }
 
 protected:
     void focusInEvent(QFocusEvent *event) override;
 
 private slots:
     void showContextMenu(const QPoint &globalPos);
+    void onDeleteRequested();
+    void onCopyFinished();
 
 private:
     void setupUi();
@@ -60,5 +66,5 @@ private:
     QVector<FilePluginInterface*> plugins;
     QToolBar *m_pluginToolBar;
     QMap<FilePluginInterface*, QDockWidget*> m_pluginDocks;
-
+    CopySignals m_copySignals;
 };

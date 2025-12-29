@@ -1,5 +1,3 @@
-#include "FileOperationsBtn.h"
-#include "FileOperations.h"
 #include <QMessageBox>
 #include <QLabel>
 #include <QPushButton>
@@ -10,7 +8,9 @@
 #include <QMessageBox>
 #include <QTreeView>
 #include <QFileSystemModel>
-
+#include "FileOperationsBtn.h"
+#include "FileOperations.h"
+#include "CopySignals.h"
 
 void FileOperationsBtn::execute(const QStringList &files)
 {
@@ -47,77 +47,34 @@ void FileOperationsBtn::onDelete()
 {
     auto *view  = qobject_cast<QTreeView*>(m_api->activeView());
     auto *model = qobject_cast<QFileSystemModel*>(view->model());
-    const auto sel = view->selectionModel()->selectedRows();
 
+    const auto sel = view->selectionModel()->selectedRows();
     if (sel.isEmpty()) {
         m_api->showMessage("No selection.");
         return;
     }
 
-    int count = 0;
-    for (auto idx : sel) {
-        QString path = model->filePath(idx);
-        if (FileOperations::removePath(path))
-            ++count;
-        else
-            m_api->showMessage("Failed to delete: " + path);
-    }
+    QStringList paths;
+    for (auto idx : sel)
+        paths << model->filePath(idx);
 
-    m_api->showMessage( QString("Deleted %1 items.").arg(count));
-    // Обновить текущее отображение
+    // Подтверждение
+    QString msg = "Delete selected items?\n\n" + paths.join("\n");
+    if (QMessageBox::question(nullptr, "Confirm delete", msg) != QMessageBox::Yes)
+        return;
+
+    int count = FileOperations::removePaths(paths);
+
+    m_api->showMessage(QString("Deleted %1 items.").arg(count));
+
+    // Обновляем панель
     QString root = model->filePath(view->rootIndex());
     view->setRootIndex(model->index(root));
 }
 
 void FileOperationsBtn::onCopy()
 {
-    auto *srcView = qobject_cast<QTreeView*>(m_api->activeView());
-    auto *dstView = qobject_cast<QTreeView*>(m_api->passiveView());
-
-    auto *srcModel = qobject_cast<QFileSystemModel*>(srcView->model());
-    auto *dstModel = qobject_cast<QFileSystemModel*>(dstView->model());
-
-    QString dstDir = dstModel->filePath(dstView->rootIndex());
-    if (dstDir.isEmpty()) {
-        m_api->showMessage("No destination.");
-        return;
-    }
-
-    const auto sel = srcView->selectionModel()->selectedRows();
-    if (sel.isEmpty()) {
-        m_api->showMessage("No items selected.");
-        return;
-    }
-
-    int count = 0;
-    for (auto idx : sel) {
-        QString srcPath = srcModel->filePath(idx);
-        QFileInfo info(srcPath);
-        QString dstPath = QDir(dstDir).filePath(info.fileName());
-
-
-        bool ok = false;
-        if (info.isDir()) {
-            ok = FileOperations::copyDirectoryRecursively(srcPath, dstPath);
-        } else {
-            if (QFile::exists(dstPath)) {
-                QFile::remove(dstPath); // перезаписать
-            }
-            ok = QFile::copy(srcPath, dstPath);
-        }
-
-        if (ok) ++count;
-        else{
-            qDebug() << "Failed to copy from" << srcPath << "to" << dstPath;
-            qDebug() << "Exists:" << QFile::exists(srcPath);
-            qDebug() << "Readable:" << QFileInfo(srcPath).isReadable();
-            qDebug() << "Writable destination:" << QFileInfo(dstDir).isWritable();
-            m_api->showMessage("Failed to copy: " + srcPath);
-
-        }
-    }
-
-    m_api->showMessage(QString("Copied %1 items to:\n%2").arg(count).arg(dstDir));
+    m_api->performCopyOperation();  // новый метод в ApplicationAPI
 }
 
 

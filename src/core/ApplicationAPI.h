@@ -7,10 +7,12 @@
 class FilePluginInterface;
 class QHBoxLayout;
 class QAction;
+class CopySignals;
 
 class ApplicationAPI {
 public:
-    virtual ~ApplicationAPI() {}
+    virtual ~ApplicationAPI() = default;
+    virtual CopySignals* copySignals() = 0;
 
     virtual QString currentFilePath() const = 0;
     virtual void showMessage(const QString &msg) = 0;
@@ -20,7 +22,8 @@ public:
     virtual QWidget* passiveView() const = 0;
     virtual QStringList selectedFiles() const = 0;
     virtual void addContextMenuAction(QAction *action) = 0;
-
+    virtual void performCopyOperation() = 0;
+    virtual QWidget* mainWindow() const = 0;
 };
 
 #endif // APPLICATIONAPI_H

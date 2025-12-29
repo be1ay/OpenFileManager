@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "MainWindow.h"
 #include "FilePanel.h"
 
 #include "FilePluginInterface.h"
@@ -15,6 +15,8 @@
 #include <QToolBar>
 #include <QDockWidget>
 #include <QMenu>
+#include <QResource>
+#include "FileOperations.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -126,6 +128,21 @@ void MainWindow::connectSignals()
     connect(rightPanel, &FilePanel::contextMenuRequested,
         this,       &MainWindow::showContextMenu);
 
+    connect(leftPanel,  &FilePanel::deleteRequested,
+        this,       &MainWindow::onDeleteRequested);
+
+    connect(rightPanel, &FilePanel::deleteRequested,
+        this,       &MainWindow::onDeleteRequested);
+    
+    connect(leftPanel,  &FilePanel::copyRequested,
+        this,       &MainWindow::performCopyOperation);
+
+    connect(rightPanel, &FilePanel::copyRequested,
+        this,       &MainWindow::performCopyOperation);
+
+    connect(copySignals(), &CopySignals::copyFinished,
+         this,      &MainWindow::onCopyFinished);
+
 }
 
 void MainWindow::loadPlugins()
@@ -171,6 +188,8 @@ void MainWindow::loadPlugins()
         }
 
         if(!iface->backgroundPlugin()){
+            qDebug() << QFile::exists(":/icons/default_plugin.png");
+
             // добавить кнопку на тулбар — при клике вызываем execute()
             QAction *act = m_pluginToolBar->addAction(iface->icon().isNull() ? QIcon(":/icons/default_plugin.png") : iface->icon(), iface->name());
             connect(act, &QAction::triggered, this, [this, iface]() {
@@ -325,3 +344,85 @@ void MainWindow::showContextMenu(const QPoint &globalPos)
 
     menu.exec(globalPos);
 }
+
+void MainWindow::onDeleteRequested()
+{
+    auto *view  = qobject_cast<QTreeView*>(activeView());
+    auto *model = qobject_cast<QFileSystemModel*>(view->model());
+
+    const auto sel = view->selectionModel()->selectedRows();
+    if (sel.isEmpty()) {
+        showMessage("No selection.");
+        return;
+    }
+
+    // Собираем список путей
+    QStringList paths;
+    for (auto idx : sel)
+        paths << model->filePath(idx);
+
+    // Подтверждение
+    QString msg = "Delete selected items?\n\n" + paths.join("\n");
+    if (QMessageBox::question(this, "Confirm delete", msg) != QMessageBox::Yes)
+        return;
+
+    // Удаляем через Core
+    int count = FileOperations::removePaths(paths);
+
+    showMessage(QString("Deleted %1 items.").arg(count));
+
+    // Обновляем панель
+    QString root = model->filePath(view->rootIndex());
+    view->setRootIndex(model->index(root));
+}
+
+void MainWindow::performCopyOperation()
+{
+    auto *srcView  = qobject_cast<QTreeView*>(activeView());
+    auto *dstView  = qobject_cast<QTreeView*>(passiveView());
+
+    auto *srcModel = qobject_cast<QFileSystemModel*>(srcView->model());
+    auto *dstModel = qobject_cast<QFileSystemModel*>(dstView->model());
+
+    const auto sel = srcView->selectionModel()->selectedRows();
+    if (sel.isEmpty()) {
+        showMessage("No selection.");
+        return;
+    }
+
+    QStringList files;
+    for (auto idx : sel)
+        files << srcModel->filePath(idx);
+
+    const QString dstDir = dstModel->filePath(dstView->rootIndex());
+
+    FileOperations::copyFilesAsync(files, dstDir, this);
+
+    // обновить пассивную панель
+    dstView->setRootIndex(dstModel->index(dstDir));
+}
+
+void MainWindow::onCopyFinished()
+{
+    auto *dstView  = qobject_cast<QTreeView*>(passiveView());
+    auto *oldModel = qobject_cast<QFileSystemModel*>(dstView->model());
+
+    QString dstDir = oldModel->filePath(dstView->rootIndex());
+
+    // Создаём новую модель
+    auto *newModel = new QFileSystemModel(dstView);
+    newModel->setFilter(oldModel->filter());
+    newModel->setRootPath(dstDir);
+
+    dstView->setModel(newModel);
+    dstView->setRootIndex(newModel->index(dstDir));
+
+    // старую модель можно удалить
+    oldModel->deleteLater();
+}
+
+
+
+
+
+

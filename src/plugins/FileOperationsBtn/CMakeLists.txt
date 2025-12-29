@@ -11,11 +11,14 @@ include_directories(${CMAKE_SOURCE_DIR}/../..)  # путь к интерфейс
 add_library(FileOperationsBtn SHARED
     FileOperationsBtn.cpp
     FileOperationsBtn.h
-    FileOperations.h
-    FileOperations.cpp
 )
 
-target_link_libraries(FileOperationsBtn Qt6::Core Qt6::Widgets)
+target_link_libraries(FileOperationsBtn
+    PRIVATE
+        BelkinCore
+        Qt6::Core
+        Qt6::Widgets
+)
 
 # Задаём префикс и суффикс для плагина, как требует Qt
 set_target_properties(FileOperationsBtn PROPERTIES
