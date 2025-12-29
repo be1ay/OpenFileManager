@@ -1,5 +1,5 @@
 # BelkinCommander
-![Build Status](github.com)
+[![C++ CI](https://github.com/be1ay/OpenFileManager/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/be1ay/OpenFileManager/actions/workflows/release.yml)
 
 Кроссплатформенный файловый менеджер, вдохновлённый классическими инструментами вроде Total Commander.
 Проект построен на чистой архитектуре, разделяющей ядро, плагины и UI, и использует Qt для реализации интерфейса и работы с файловой системой.
