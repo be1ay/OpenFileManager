@@ -24,13 +24,14 @@ jobs:
         run: |
           cmake -B build -S . -DPATCH_VERSION=${{ github.run_number }}
           cmake --build build
+          cd build
           cpack -G DEB
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.run_number }}
-          files: ./*.deb
+          files: build/*.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
