@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/github_actions
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,12 +24,13 @@ jobs:
         run: |
           cmake -B build -S . -DPATCH_VERSION=${{ github.run_number }}
           cmake --build build
+          cpack -G DEB
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.run_number }}
-          files: ./BelkinCommander-0.0.${{ github.run_number }}-Linux.deb
+          files: ./*.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

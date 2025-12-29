@@ -72,3 +72,11 @@ foreach(plugin_target IN LISTS PLUGIN_TARGETS)
             ${PLUGINS_OUTPUT_DIR}
     )
 endforeach()
+
+# Настройки для создания пакета
+set(CPACK_PACKAGE_NAME "BelkinCommander")
+set(CPACK_PACKAGE_VERSION "0.0.${PATCH_VERSION}")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Aleksei Belkin")
+set(CPACK_GENERATOR "DEB")
+
+include(CPack)
