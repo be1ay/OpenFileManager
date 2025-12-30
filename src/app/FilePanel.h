@@ -20,9 +20,11 @@ public:
     QTreeView*             view() const { return m_view; }
     QFileSystemModel*      model() const { return m_model; }
     QString                currentPath() const { return m_currentPath; }
+    QModelIndex lastIndex()const {return m_lastIndex; }
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 signals:
     // Посылается при переходе на новую папку
@@ -30,8 +32,7 @@ signals:
     void contextMenuRequested(const QPoint &globalPos);
     void deleteRequested();
     void copyRequested();
-
-
+    void activated();
 
 private slots:
     void onUpClicked();
@@ -46,6 +47,7 @@ private:
     QLabel           *m_pathLabel;
     QPushButton      *m_upButton;
     QComboBox        *m_driveBox;
-
     QString           m_currentPath;
+    QModelIndex       m_lastIndex;
+
 };

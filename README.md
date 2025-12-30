@@ -24,10 +24,6 @@
 Плагины подключаются через ApplicationAPI. 
 Пример: ExamplePlugin.
 
-
-## 📡 CopySignals
-Сигналы: copyStarted, copyProgress, copyError, copyFinished.
-
 ## 🛠 Сборка
 ```bash
 mkdir build

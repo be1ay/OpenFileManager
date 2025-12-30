@@ -19,8 +19,32 @@ FilePanel::FilePanel(QWidget *parent)
     m_view->setModel(m_model);
     m_view->setRootIsDecorated(false);
     m_view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_view->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_view->setColumnWidth(0, 250);
     m_view->setContextMenuPolicy(Qt::CustomContextMenu);
+    
+
+
+    // фильтр на viewport – ловим клик по пустому месту
+    m_view->viewport()->installEventFilter(this);
+
+    // инициализация lastIndex после установки rootIndex
+    m_currentPath = QDir::homePath();
+    m_view->setRootIndex(m_model->index(m_currentPath));
+    m_pathLabel->setText(m_currentPath);
+
+    // если есть хотя бы одна строка – запомним её как стартовую
+    QModelIndex first = m_model->index(0, 0, m_view->rootIndex());
+    if (first.isValid())
+        m_lastIndex = first;
+
+    // следим за текущей строкой
+    connect(m_view->selectionModel(), &QItemSelectionModel::currentChanged,
+            this, [this](const QModelIndex &current, const QModelIndex &){
+                if (current.isValid())
+                    m_lastIndex = current.sibling(current.row(), 0); // нормализуем к колонке 0
+            });
+
 
     // Инициализация пути
     m_currentPath = QDir::homePath();
@@ -116,4 +140,23 @@ void FilePanel::keyPressEvent(QKeyEvent *event)
 
     QWidget::keyPressEvent(event);
 }
+
+bool FilePanel::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == m_view->viewport() && event->type() == QEvent::MouseButtonPress) {
+
+        QMouseEvent *me = static_cast<QMouseEvent*>(event);
+        QModelIndex idx = m_view->indexAt(me->pos());
+
+        emit activated();
+
+        if (!idx.isValid()) {
+            return true;
+        }
+        return false;
+    }
+
+    return QWidget::eventFilter(obj, event);
+}
+
 

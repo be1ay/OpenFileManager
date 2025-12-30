@@ -39,7 +39,7 @@ public:
     QWidget* mainWindow() const override { return const_cast<MainWindow*>(this); }
 
 protected:
-    void focusInEvent(QFocusEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private slots:
     void showContextMenu(const QPoint &globalPos);

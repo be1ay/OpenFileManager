@@ -107,20 +107,12 @@ void MainWindow::setupUi()
 void MainWindow::connectSignals()
 {
     // Выбор активной панели по клику
-    connect(leftPanel->view(), &QTreeView::clicked, this, [this](const QModelIndex&){
-        setActivePanel(leftPanel->view());
-    });
-    connect(rightPanel->view(), &QTreeView::clicked, this, [this](const QModelIndex&){
-        setActivePanel(rightPanel->view());
-    });
+    connect(leftPanel,  &FilePanel::activated,
+        this,       [this]() { setActivePanel(leftPanel->view()); });
 
-    // Активная панель по двойному клику
-    connect(leftPanel->view(), &QTreeView::doubleClicked, this, [this](const QModelIndex&){
-        setActivePanel(leftPanel->view());
-    });
-    connect(rightPanel->view(), &QTreeView::doubleClicked, this, [this](const QModelIndex&){
-        setActivePanel(rightPanel->view());
-    });
+    connect(rightPanel, &FilePanel::activated,
+        this,       [this]() { setActivePanel(rightPanel->view()); });
+
     // Контекстное меню
     connect(leftPanel,  &FilePanel::contextMenuRequested,
         this,       &MainWindow::showContextMenu);
@@ -243,15 +235,45 @@ void MainWindow::setActivePanel(QWidget *view)
     if (currentActiveView == view)
         return;
 
-    // Сброс селекции старой панели
+    // 1. Снимаем выделение со старой активной панели (если была)
     if (currentActiveView) {
-        auto *oldView = qobject_cast<QTreeView*>(currentActiveView);
-        if (oldView)
-            oldView->selectionModel()->clearSelection();
+        if (auto *oldView = qobject_cast<QTreeView*>(currentActiveView)) {
+            if (auto *oldSel = oldView->selectionModel()) {
+                oldSel->clearSelection();
+            }
+        }
     }
 
+    // 2. Запоминаем новую активную
     currentActiveView = view;
-    view->setFocus();
+
+    auto *panel = qobject_cast<FilePanel*>(view->parentWidget());
+    auto *tree  = qobject_cast<QTreeView*>(view);
+
+    if (!panel || !tree)
+        return;
+
+    tree->setFocus();
+
+    QModelIndex idx = panel->lastIndex();
+
+    // Если нет lastIndex — берём первую строку
+    if (!idx.isValid())
+        idx = tree->model()->index(0, 0, tree->rootIndex());
+
+    if (idx.isValid()) {
+        // На всякий случай нормализуем к колонке 0
+        idx = idx.sibling(idx.row(), 0);
+
+        if (auto *sel = tree->selectionModel()) {
+            sel->setCurrentIndex(
+                idx,
+                QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows
+            );
+        }
+        tree->scrollTo(idx);
+    }
+
     updateActiveStyles();
 }
 
@@ -262,9 +284,11 @@ void MainWindow::updateActiveStyles()
 
     auto *lview = leftPanel->view();
     auto *rview = rightPanel->view();
-    lview->setStyleSheet(lview->hasFocus() ? activeStyle : inactiveStyle);
-    rview->setStyleSheet(rview->hasFocus() ? activeStyle : inactiveStyle);
+
+    lview->setStyleSheet(currentActiveView == lview ? activeStyle : inactiveStyle);
+    rview->setStyleSheet(currentActiveView == rview ? activeStyle : inactiveStyle);
 }
+
 
 void MainWindow::createPluginToolbar()
 {
@@ -294,12 +318,12 @@ QHBoxLayout* MainWindow::footerBtnPanel() const
     return m_btnLayout;
 }
 
-
+/*
 void MainWindow::focusInEvent(QFocusEvent *ev)
 {
     QMainWindow::focusInEvent(ev);
     updateActiveStyles();
-}
+}*/
 
 QStringList MainWindow::selectedFiles() const
 {
@@ -369,7 +393,7 @@ void MainWindow::onDeleteRequested()
     // Удаляем через Core
     int count = FileOperations::removePaths(paths);
 
-    showMessage(QString("Deleted %1 items.").arg(count));
+    //showMessage(QString("Deleted %1 items.").arg(count));
 
     // Обновляем панель
     QString root = model->filePath(view->rootIndex());
@@ -419,6 +443,20 @@ void MainWindow::onCopyFinished()
 
     // старую модель можно удалить
     oldModel->deleteLater();
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::FocusIn) {
+
+        if (obj == leftPanel->view())
+            setActivePanel(leftPanel->view());
+
+        if (obj == rightPanel->view())
+            setActivePanel(rightPanel->view());
+    }
+
+    return QMainWindow::eventFilter(obj, event);
 }
 
 
