@@ -442,22 +442,9 @@ void MainWindow::performCopyOperation()
 
 void MainWindow::onCopyFinished()
 {
-    auto *dstView  = qobject_cast<QTreeView*>(passiveView());
-    auto *oldModel = qobject_cast<QFileSystemModel*>(dstView->model());
 
-    QString dstDir = oldModel->filePath(dstView->rootIndex());
-
-    // Создаём новую модель
-    auto *newModel = new QFileSystemModel(dstView);
-    newModel->setFilter(oldModel->filter());
-    newModel->setRootPath(dstDir);
-
-    dstView->setModel(newModel);
-    dstView->setRootIndex(newModel->index(dstDir));
-
-    // старую модель можно удалить
-    oldModel->deleteLater();
 }
+
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {

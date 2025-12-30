@@ -58,10 +58,11 @@ bool FileOperations::copyFileWithProgress(const QString &srcFile,
                                           ApplicationAPI *api)
 {
     QFile in(srcFile);
-    QFile out(dstFile);
-
     if (!in.open(QIODevice::ReadOnly))
         return false;
+
+    QString tmpFile = dstFile + ".tmp";
+    QFile out(tmpFile);
 
     if (!out.open(QIODevice::WriteOnly))
         return false;
@@ -69,50 +70,46 @@ bool FileOperations::copyFileWithProgress(const QString &srcFile,
     qint64 total = in.size();
     qint64 copied = 0;
 
-    const qint64 block = 1024 * 1024; // 1 MB
-    QByteArray buffer;
-    buffer.resize(block);
+    const qint64 block = 1024 * 1024;
+    QByteArray buffer(block, Qt::Uninitialized);
 
     QElapsedTimer timer;
     timer.start();
 
     while (true) {
 
-    qint64 read = in.read(buffer.data(), block);
+        qint64 read = in.read(buffer.data(), block);
+        if (read < 0)
+            return false;
 
-    if (read < 0) {
-        // ошибка чтения
-        return false;
-    }
+        if (read == 0)
+            break;
 
-    if (read == 0) {
-        // EOF
-        break;
-    }
+        if (out.write(buffer.constData(), read) != read)
+            return false;
 
-    qint64 written = out.write(buffer.data(), read);
-    if (written != read) {
-        // ошибка записи
-        return false;
-    }
+        copied += read;
 
-    copied += read;
+        double seconds = timer.elapsed() / 1000.0;
+        double speedMB = seconds > 0
+            ? (copied / (1024.0 * 1024.0)) / seconds
+            : 0;
 
-    double seconds = timer.elapsed() / 1000.0;
-    double speedMB = seconds > 0 ? (copied / (1024.0 * 1024.0)) / seconds : 0;
-
-    auto *sig = api->copySignals();
-    if (sig)
-        emit sig->copyProgress(fileIndex, copied, total, speedMB);
+        if (auto *sig = api->copySignals())
+            emit sig->copyProgress(fileIndex, copied, total, speedMB);
     }
 
     out.flush();
     out.close();
     in.close();
 
+    QFile::remove(dstFile);               // если перезапись
+    if (!QFile::rename(tmpFile, dstFile)) // ключевой момент
+        return false;
 
     return true;
 }
+
 
 bool FileOperations::copyFilesSync(const QStringList &srcFiles,
                                    const QString &dstDir,
