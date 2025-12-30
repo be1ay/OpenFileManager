@@ -6,7 +6,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QComboBox>
-
+#include <QPersistentModelIndex>
 
 
 class FilePanel : public QWidget
@@ -50,6 +50,6 @@ private:
     QPushButton      *m_upButton;
     QComboBox        *m_driveBox;
     QString           m_currentPath;
-    QModelIndex       m_lastIndex;
+    QPersistentModelIndex     m_lastIndex;
 
 };

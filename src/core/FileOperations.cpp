@@ -236,18 +236,68 @@ static bool sendToTrash(const QStringList &paths)
 #ifdef Q_OS_LINUX
 #include <QStandardPaths>
 #include <QFile>
+#include <QTextStream>
+#include <QDateTime>
+
+static QString generateUniqueTrashName(const QString &trashFilesDir, const QString &baseName)
+{
+    QString candidate = baseName;
+    int counter = 1;
+
+    while (QFile::exists(trashFilesDir + candidate)) {
+        candidate = baseName + QStringLiteral("_%1").arg(counter++);
+    }
+
+    return candidate;
+}
+
+static bool writeTrashInfo(const QString &trashInfoDir,
+                           const QString &uniqueName,
+                           const QString &originalPath)
+{
+    QString infoPath = trashInfoDir + uniqueName + ".trashinfo";
+
+    QFile infoFile(infoPath);
+    if (!infoFile.open(QIODevice::WriteOnly | QIODevice::Text))
+        return false;
+
+    QTextStream out(&infoFile);
+    out << "[Trash Info]\n";
+    out << "Path=" << originalPath << "\n";
+    out << "DeletionDate=" << QDateTime::currentDateTime().toString(Qt::ISODate) << "\n";
+
+    return true;
+}
 
 static bool sendToTrash(const QStringList &paths)
 {
-    QString trash = QStandardPaths::writableLocation(QStandardPaths::HomeLocation)
-                    + "/.local/share/Trash/files/";
+    QString trashBase = QStandardPaths::writableLocation(QStandardPaths::HomeLocation)
+                        + "/.local/share/Trash/";
 
-    QDir().mkpath(trash);
+    QString trashFiles = trashBase + "files/";
+    QString trashInfo  = trashBase + "info/";
+
+    QDir().mkpath(trashFiles);
+    QDir().mkpath(trashInfo);
 
     for (const QString &p : paths) {
-        QString name = QFileInfo(p).fileName();
-        QFile::rename(p, trash + name);
+
+        QFileInfo fi(p);
+        QString baseName = fi.fileName();
+
+        // 1. Генерируем уникальное имя
+        QString uniqueName = generateUniqueTrashName(trashFiles, baseName);
+
+        // 2. Создаём .trashinfo
+        if (!writeTrashInfo(trashInfo, uniqueName, fi.absoluteFilePath()))
+            return false;
+
+        // 3. Перемещаем файл
+        QString target = trashFiles + uniqueName;
+        if (!QFile::rename(p, target))
+            return false;
     }
+
     return true;
 }
 #endif
