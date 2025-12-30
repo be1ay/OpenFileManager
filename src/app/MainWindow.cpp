@@ -148,6 +148,12 @@ void MainWindow::connectSignals()
 
     connect(copySignals(), &CopySignals::copyFinished,
          this,      &MainWindow::onCopyFinished);
+    
+    connect(leftPanel,  &FilePanel::copyDropped,
+            this,       &MainWindow::onCopyDropped);
+
+    connect(rightPanel, &FilePanel::copyDropped,
+            this,       &MainWindow::onCopyDropped);
 
 }
 
@@ -473,6 +479,48 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("Panels/RightPath", rightPanel->currentPath());
 
     QMainWindow::closeEvent(event);
+}
+
+void MainWindow::onCopyDropped(const QStringList &srcPaths, const QString &dstDir)
+{
+    QStringList filtered;
+
+    for (const QString &src : srcPaths)
+    {
+        QFileInfo fi(src);
+
+        // Если копируем в ту же папку — пропускаем
+        if (fi.absolutePath() == dstDir)
+            continue;
+
+        filtered << src;
+    }
+
+    if (filtered.isEmpty())
+        return; // нечего копировать
+
+    FileOperations::copyFilesAsync(filtered, dstDir, this);
+
+    auto *dstView  = qobject_cast<QTreeView*>(passiveView());
+    auto *dstModel = qobject_cast<QFileSystemModel*>(dstView->model());
+    dstView->setRootIndex(dstModel->index(dstDir));
+}
+
+void MainWindow::refreshPanelForPath(const QString &path)
+{
+    // Определяем, какая панель является целевой
+    FilePanel *panel = nullptr;
+
+    if (leftPanel->currentPath() == path)
+        panel = leftPanel;
+    else if (rightPanel->currentPath() == path)
+        panel = rightPanel;
+
+    if (!panel)
+        return;
+
+    // Обновляем rootIndex (это заставляет модель перечитать директорию)
+    panel->refresh();
 }
 
 

@@ -46,6 +46,8 @@ private slots:
     void showContextMenu(const QPoint &globalPos);
     void onDeleteRequested(bool permanent);
     void onCopyFinished();
+    void onCopyDropped(const QStringList &srcPaths, const QString &dstDir);
+
 
 private:
     void setupUi();
@@ -68,4 +70,5 @@ private:
     QToolBar *m_pluginToolBar;
     QMap<FilePluginInterface*, QDockWidget*> m_pluginDocks;
     CopySignals m_copySignals;
+    void refreshPanelForPath(const QString &path);
 };

@@ -4,12 +4,14 @@
 #include <QFileInfo>
 #include <QMenu>
 #include <QKeyEvent>
+#include <QDropEvent>
+#include <QMimeData>
 #include "FilePanel.h"
 
 FilePanel::FilePanel(QWidget *parent)
     : QWidget(parent)
     , m_model(new QFileSystemModel(this))
-    , m_view(new QTreeView(this))
+    , m_view(new FileView(this))
     , m_pathLabel(new QLabel(this))
     , m_upButton(new QPushButton("⬆ Up", this))
     , m_driveBox(new QComboBox(this))
@@ -23,9 +25,14 @@ FilePanel::FilePanel(QWidget *parent)
     m_view->setColumnWidth(0, 250);
     m_view->setContextMenuPolicy(Qt::CustomContextMenu);
     
-
-
-    // фильтр на viewport – ловим клик по пустому месту
+//Drag&Drop
+    m_view->setDragEnabled(true);
+    m_view->viewport()->setAcceptDrops(true);
+    m_view->setAcceptDrops(true); 
+    m_view->setDropIndicatorShown(true);
+    m_view->setDragDropMode(QAbstractItemView::DragDrop);
+    m_view->setDefaultDropAction(Qt::IgnoreAction);
+    // Перехватываем события 
     m_view->viewport()->installEventFilter(this);
 
     // инициализация lastIndex после установки rootIndex
@@ -79,7 +86,6 @@ FilePanel::FilePanel(QWidget *parent)
         this, [this](const QPoint &pos) {
             emit contextMenuRequested(m_view->viewport()->mapToGlobal(pos));
         });
-
 }
 
 void FilePanel::populateDriveBox()
@@ -158,6 +164,33 @@ bool FilePanel::eventFilter(QObject *obj, QEvent *event)
         }
         return false;
     }
+    if (obj == m_view->viewport())
+    {
+        if (event->type() == QEvent::DragEnter)
+        {
+            auto *e = static_cast<QDragEnterEvent *>(event);
+            if (e->mimeData()->hasUrls())
+                e->acceptProposedAction();
+            return true;
+        }
+        if (event->type() == QEvent::DragMove)
+        {
+            auto *e = static_cast<QDragMoveEvent *>(event);
+            e->acceptProposedAction();
+            return true;
+        }
+        if (event->type() == QEvent::Drop)
+        {
+            auto *e = static_cast<QDropEvent *>(event);
+            QStringList paths;
+            for (const QUrl &url : e->mimeData()->urls())
+                paths << url.toLocalFile();
+            QString dstDir = m_model->filePath(m_view->rootIndex());
+            emit copyDropped(paths, dstDir);
+            e->acceptProposedAction();
+            return true;
+        }
+    }
 
     return QWidget::eventFilter(obj, event);
 }
@@ -177,3 +210,12 @@ void FilePanel::setPath(const QString &path)
         m_lastIndex = first;
 }
 
+void FilePanel::refresh()
+{
+    // Сбрасываем lastIndex — директория могла измениться
+    m_lastIndex = QPersistentModelIndex();
+
+    // Перечитываем директорию
+    QModelIndex idx = m_model->index(m_currentPath);
+    m_view->setRootIndex(idx);
+}
