@@ -63,7 +63,7 @@ void FileOperationsBtn::onDelete()
     if (QMessageBox::question(nullptr, "Confirm delete", msg) != QMessageBox::Yes)
         return;
 
-    int count = FileOperations::removePaths(paths);
+    int count = FileOperations::removePaths(paths, false);
 
     m_api->showMessage(QString("Deleted %1 items.").arg(count));
 

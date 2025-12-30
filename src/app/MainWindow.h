@@ -40,10 +40,11 @@ public:
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void showContextMenu(const QPoint &globalPos);
-    void onDeleteRequested();
+    void onDeleteRequested(bool permanent);
     void onCopyFinished();
 
 private:

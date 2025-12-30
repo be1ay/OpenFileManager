@@ -129,17 +129,20 @@ void FilePanel::onItemActivated(const QModelIndex &idx)
 void FilePanel::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete) {
-        emit deleteRequested();
+
+        bool permanent = event->modifiers() & Qt::ShiftModifier;
+        emit deleteRequested(permanent);
         return;
     }
-    
+
     if (event->key() == Qt::Key_F5) {
-         emit copyRequested();
-          return; 
+        emit copyRequested();
+        return;
     }
 
     QWidget::keyPressEvent(event);
 }
+
 
 bool FilePanel::eventFilter(QObject *obj, QEvent *event)
 {
@@ -159,4 +162,18 @@ bool FilePanel::eventFilter(QObject *obj, QEvent *event)
     return QWidget::eventFilter(obj, event);
 }
 
+void FilePanel::setPath(const QString &path)
+{
+    if (!QFileInfo(path).exists())
+        return;
+
+    m_currentPath = path;
+    m_view->setRootIndex(m_model->index(path));
+    m_pathLabel->setText(path);
+
+    // обновляем lastIndex — ставим первую строку
+    QModelIndex first = m_model->index(0, 0, m_view->rootIndex());
+    if (first.isValid())
+        m_lastIndex = first;
+}
 

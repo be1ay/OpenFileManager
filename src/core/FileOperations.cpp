@@ -190,16 +190,111 @@ void FileOperations::copyFilesAsync(const QStringList &srcFiles,
     thread->start();
 }
 
-int FileOperations::removePaths(const QStringList &paths)
-{
-    int count = 0;
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <shlobj.h>
 
-    for (const QString &path : paths) {
-        if (removePath(path))
-            ++count;
+static bool sendToTrash(const QStringList &paths)
+{
+    // Формируем двойной \0-терминированный список путей
+    QString joined;
+
+    for (const QString &p : paths) {
+
+        // Преобразуем путь в нативный формат Windows
+        QString native = QDir::toNativeSeparators(p);
+
+        // Добавляем префикс \\?\ для поддержки длинных путей
+        if (!native.startsWith("\\\\?\\")) {
+            native = "\\\\?\\" + native;
+        }
+
+        // Добавляем путь + \0
+        joined += native;
+        joined += QChar('\0');
     }
 
-    return count;
+    // Завершающий двойной \0
+    joined += QChar('\0');
+
+    // Структура операции
+    SHFILEOPSTRUCTW op;
+    memset(&op, 0, sizeof(op));
+
+    op.wFunc = FO_DELETE;
+    op.pFrom = (LPCWSTR)joined.utf16();
+
+    // FOF_ALLOWUNDO — отправить в корзину
+    // FOF_NOCONFIRMATION — без подтверждения
+    // FOF_SILENT — без диалогов
+    op.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT;
+
+    int result = SHFileOperationW(&op);
+
+    // result == 0 → успех
+    return (result == 0);
+}
+#endif
+
+#ifdef Q_OS_LINUX
+#include <QStandardPaths>
+#include <QFile>
+
+static bool sendToTrash(const QStringList &paths)
+{
+    QString trash = QStandardPaths::writableLocation(QStandardPaths::HomeLocation)
+                    + "/.local/share/Trash/files/";
+
+    QDir().mkpath(trash);
+
+    for (const QString &p : paths) {
+        QString name = QFileInfo(p).fileName();
+        QFile::rename(p, trash + name);
+    }
+    return true;
+}
+#endif
+
+#ifdef Q_OS_MAC
+#include <Foundation/Foundation.h>
+
+static bool sendToTrash(const QStringList &paths)
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+
+    for (const QString &p : paths) {
+
+        const char *fsPath = p.toUtf8().constData();
+        NSString *ns = [NSString stringWithUTF8String:fsPath];
+
+        if (!ns)
+            continue;
+
+        NSURL *url = [NSURL fileURLWithPath:ns];
+
+        NSError *error = nil;
+        [fm trashItemAtURL:url resultingItemURL:nil error:&error];
+
+        if (error)
+            return false;
+    }
+    return true;
+}
+#endif
+
+bool FileOperations::removePaths(const QStringList &paths, bool permanent)
+{
+    if (paths.isEmpty())
+        return false;
+
+    if (!permanent)
+        return sendToTrash(paths);
+
+    bool ok = true;
+    for (const QString &path : paths)
+        ok &= removePath(path);
+
+    return ok;
 }
 
 bool FileOperations::removePath(const QString &path)

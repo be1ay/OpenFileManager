@@ -21,6 +21,8 @@ public:
     QFileSystemModel*      model() const { return m_model; }
     QString                currentPath() const { return m_currentPath; }
     QModelIndex lastIndex()const {return m_lastIndex; }
+    void setPath(const QString &path);
+
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -30,7 +32,7 @@ signals:
     // Посылается при переходе на новую папку
     void pathChanged(const QString &newPath);
     void contextMenuRequested(const QPoint &globalPos);
-    void deleteRequested();
+    void deleteRequested(bool permanent);
     void copyRequested();
     void activated();
 

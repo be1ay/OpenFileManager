@@ -1,8 +1,3 @@
-#include "MainWindow.h"
-#include "FilePanel.h"
-
-#include "FilePluginInterface.h"
-
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -16,6 +11,10 @@
 #include <QDockWidget>
 #include <QMenu>
 #include <QResource>
+#include <QSettings>
+#include "MainWindow.h"
+#include "FilePanel.h"
+#include "FilePluginInterface.h"
 #include "FileOperations.h"
 
 
@@ -30,14 +29,29 @@ MainWindow::MainWindow(QWidget *parent)
     setupUi();
     loadPlugins();
 
+
+
+    QSettings settings("BelkinSoft", "BelkinCommander");
+
+    QString leftPath  = settings.value("Panels/LeftPath",  QDir::homePath()).toString();
+    QString rightPath = settings.value("Panels/RightPath", QDir::homePath()).toString();
+
+    // восстановить пути
+    leftPanel->setPath(leftPath);
+    rightPanel->setPath(rightPath);
+    //Restore geometry
+    if (settings.contains("MainWindow/geometry"))
+        restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
+
+    if (settings.contains("MainWindow/state"))
+        restoreState(settings.value("MainWindow/state").toByteArray());
+
     // По умолчанию – левая панель
     currentActiveView = leftPanel->view();
     currentActiveView->setFocus();
     updateActiveStyles();
 
     connectSignals();
-
-
 }
 
 MainWindow::~MainWindow()
@@ -258,7 +272,7 @@ void MainWindow::setActivePanel(QWidget *view)
     QModelIndex idx = panel->lastIndex();
 
     // Если нет lastIndex — берём первую строку
-    if (!idx.isValid())
+    if (!idx.isValid()|| idx.model() != tree->model())
         idx = tree->model()->index(0, 0, tree->rootIndex());
 
     if (idx.isValid()) {
@@ -369,7 +383,7 @@ void MainWindow::showContextMenu(const QPoint &globalPos)
     menu.exec(globalPos);
 }
 
-void MainWindow::onDeleteRequested()
+void MainWindow::onDeleteRequested(bool permanent)
 {
     auto *view  = qobject_cast<QTreeView*>(activeView());
     auto *model = qobject_cast<QFileSystemModel*>(view->model());
@@ -391,7 +405,7 @@ void MainWindow::onDeleteRequested()
         return;
 
     // Удаляем через Core
-    int count = FileOperations::removePaths(paths);
+    int count = FileOperations::removePaths(paths, permanent);
 
     //showMessage(QString("Deleted %1 items.").arg(count));
 
@@ -457,6 +471,21 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
     }
 
     return QMainWindow::eventFilter(obj, event);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    QSettings settings("BelkinSoft", "BelkinCommander");
+
+    // сохраняем геометрию окна
+    settings.setValue("MainWindow/geometry", saveGeometry());
+    settings.setValue("MainWindow/state", saveState());
+
+    // сохраняем пути панелей
+    settings.setValue("Panels/LeftPath",  leftPanel->currentPath());
+    settings.setValue("Panels/RightPath", rightPanel->currentPath());
+
+    QMainWindow::closeEvent(event);
 }
 
 

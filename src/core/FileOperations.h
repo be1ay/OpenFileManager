@@ -18,7 +18,7 @@ public:
                                      int fileIndex,
                                      ApplicationAPI *api);
 
-    static int  removePaths(const QStringList &paths);
+    static bool removePaths(const QStringList &paths, bool permanent);
     static bool removePath(const QString &path);
     static bool removeDirectoryRecursively(const QString &path);
 
