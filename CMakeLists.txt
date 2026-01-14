@@ -60,6 +60,7 @@ add_executable(BelkinCommander WIN32
     src/app/MainWindow.h
     src/app/FilePanel.cpp
     src/app/FilePanel.h
+    src/app/FileView.hpp
 )
 
 target_link_libraries(BelkinCommander

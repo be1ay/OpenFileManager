@@ -12,6 +12,7 @@
 #include <QMenu>
 #include <QResource>
 #include <QSettings>
+#include <QTreeView>
 #include "MainWindow.h"
 #include "FilePanel.h"
 #include "FilePluginInterface.h"

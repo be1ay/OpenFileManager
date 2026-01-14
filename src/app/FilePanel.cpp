@@ -6,7 +6,9 @@
 #include <QKeyEvent>
 #include <QDropEvent>
 #include <QMimeData>
+#include <QSignalBlocker>
 #include "FilePanel.h"
+#include "FileView.hpp"
 
 FilePanel::FilePanel(QWidget *parent)
     : QWidget(parent)
@@ -35,11 +37,6 @@ FilePanel::FilePanel(QWidget *parent)
     // Перехватываем события 
     m_view->viewport()->installEventFilter(this);
 
-    // инициализация lastIndex после установки rootIndex
-    m_currentPath = QDir::homePath();
-    m_view->setRootIndex(m_model->index(m_currentPath));
-    m_pathLabel->setText(m_currentPath);
-
     // если есть хотя бы одна строка – запомним её как стартовую
     QModelIndex first = m_model->index(0, 0, m_view->rootIndex());
     if (first.isValid())
@@ -53,16 +50,9 @@ FilePanel::FilePanel(QWidget *parent)
             });
 
 
-    // Инициализация пути
-    m_currentPath = QDir::homePath();
-    m_view->setRootIndex(m_model->index(m_currentPath));
-    m_pathLabel->setText(m_currentPath);
-
     // Список дисков/корневых точек
     populateDriveBox();
-    QString d = QFileInfo(m_currentPath).absolutePath().left(3);
-    int idx = m_driveBox->findText(d);
-    if (idx >= 0) m_driveBox->setCurrentIndex(idx);
+    //updateDriveBoxSelection();
 
     // Сборка интерфейса
     auto *topLayout = new QHBoxLayout;
@@ -99,8 +89,41 @@ void FilePanel::populateDriveBox()
 #else
     m_driveBox->addItem("/");
     m_driveBox->addItem(QDir::homePath());
+
+    QDir media("/media");
+    for (const QString &entry : media.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+        m_driveBox->addItem("/media/" + entry);
+
+    QDir mnt("/mnt");
+    for (const QString &entry : mnt.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+        m_driveBox->addItem("/mnt/" + entry);
 #endif
 }
+
+void FilePanel::updateDriveBoxSelection()
+{
+#ifdef Q_OS_WIN
+    QString root = QFileInfo(m_currentPath).absolutePath().left(3);
+#else
+    QString root = "/";
+
+    if (m_currentPath.startsWith("/media/"))
+        root = m_currentPath.section('/', 0, 2); // "/media/user"
+
+    else if (m_currentPath.startsWith("/mnt/"))
+        root = m_currentPath.section('/', 0, 2); // "/mnt/disk"
+
+    else if (m_currentPath.startsWith(QDir::homePath()))
+        root = QDir::homePath();
+#endif
+
+    int idx = m_driveBox->findText(root);
+    if (idx >= 0){
+        QSignalBlocker blocker(m_driveBox);
+        m_driveBox->setCurrentIndex(idx);
+    }
+}
+
 
 void FilePanel::onUpClicked()
 {
@@ -109,6 +132,7 @@ void FilePanel::onUpClicked()
         m_currentPath = dir.absolutePath();
         m_view->setRootIndex(m_model->index(m_currentPath));
         m_pathLabel->setText(m_currentPath);
+        updateDriveBoxSelection();
         emit pathChanged(m_currentPath);
     }
 }
@@ -118,6 +142,7 @@ void FilePanel::onDriveChanged(const QString &drive)
     m_currentPath = drive;
     m_view->setRootIndex(m_model->index(drive));
     m_pathLabel->setText(drive);
+    updateDriveBoxSelection();
     emit pathChanged(drive);
 }
 
@@ -128,6 +153,7 @@ void FilePanel::onItemActivated(const QModelIndex &idx)
         m_currentPath = path;
         m_view->setRootIndex(m_model->index(path));
         m_pathLabel->setText(path);
+        updateDriveBoxSelection();
         emit pathChanged(path);
     }
 }
@@ -203,6 +229,7 @@ void FilePanel::setPath(const QString &path)
     m_currentPath = path;
     m_view->setRootIndex(m_model->index(path));
     m_pathLabel->setText(path);
+    updateDriveBoxSelection();
 
     // обновляем lastIndex — ставим первую строку
     QModelIndex first = m_model->index(0, 0, m_view->rootIndex());
@@ -218,4 +245,5 @@ void FilePanel::refresh()
     // Перечитываем директорию
     QModelIndex idx = m_model->index(m_currentPath);
     m_view->setRootIndex(idx);
+    updateDriveBoxSelection();
 }
