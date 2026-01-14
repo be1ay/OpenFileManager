@@ -86,17 +86,39 @@ add_custom_command(TARGET BelkinCommander POST_BUILD
 endforeach()
 
 # Настройки для создания пакета
+# --- Правила установки (cmake --install) ---
+
+# 1. Библиотеки и исполняемые файлы
+if(WIN32)
+    install(TARGETS BelkinCommander BelkinCore
+        RUNTIME DESTINATION bin
+    )
+else()
+    # На Linux исполняемый файл в bin, библиотеку ядра в lib
+    install(TARGETS BelkinCommander RUNTIME DESTINATION bin)
+    install(TARGETS BelkinCore LIBRARY DESTINATION lib)
+    set_target_properties(BelkinCommander PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+endif()
+
+# 2. Плагины (устанавливаем из списка PLUGIN_TARGETS)
+foreach(plugin_target IN LISTS PLUGIN_TARGETS)
+    install(TARGETS ${plugin_target}
+        LIBRARY DESTINATION bin/plugins
+        RUNTIME DESTINATION bin/plugins
+    )
+endforeach()
+
+# 3. Настройки CPack
 set(CPACK_PACKAGE_NAME "BelkinCommander")
 set(CPACK_PACKAGE_VERSION "0.0.${PATCH_VERSION}")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Aleksei Belkin")
-set(CPACK_GENERATOR "DEB")
 
-# Правила установки для 'cmake --install'
-install(TARGETS BelkinCommander RUNTIME DESTINATION bin)
-install(TARGETS BelkinCore RUNTIME DESTINATION bin)
-
-# Копируем содержимое папки плагинов в инсталл-пакет
-install(DIRECTORY "$<TARGET_FILE_DIR:BelkinCommander>/plugins" DESTINATION bin/plugins OPTIONAL)
+if(WIN32)
+    set(CPACK_GENERATOR "ZIP") # Или NSIS для установщика
+else()
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+endif()
 
 include(CPack)
 
