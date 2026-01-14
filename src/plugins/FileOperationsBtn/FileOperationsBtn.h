@@ -22,6 +22,9 @@ public:
     bool backgroundPlugin() const override { return true; }
 
     QWidget* createWidget() override;
+    
+    void initialize() override {};
+    void shutdown() override {};
 signals:
     void deleteRequested();
 

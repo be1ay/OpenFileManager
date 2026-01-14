@@ -3,13 +3,14 @@
 
 #include <QString>
 #include <QWidget>
+#include "BelkinExport.h"
 
 class FilePluginInterface;
 class QHBoxLayout;
 class QAction;
 class CopySignals;
 
-class ApplicationAPI {
+class BELKINCORE_EXPORT ApplicationAPI {
 public:
     virtual ~ApplicationAPI() = default;
     virtual CopySignals* copySignals() = 0;

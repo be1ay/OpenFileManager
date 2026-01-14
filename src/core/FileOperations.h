@@ -2,10 +2,11 @@
 #pragma once
 
 #include <QStringList>
+#include "BelkinExport.h"
 
 class ApplicationAPI;
 
-class FileOperations
+class BELKINCORE_EXPORT FileOperations
 {
 public:
     static bool copyDirectoryRecursively(const QString &srcPath,

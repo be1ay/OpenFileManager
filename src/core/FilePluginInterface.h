@@ -7,9 +7,10 @@
 #include <QWidget>
 #include "ApplicationAPI.h"
 
-class FilePluginInterface {
+class BELKINCORE_EXPORT FilePluginInterface {
 public:
-    virtual ~FilePluginInterface() = default;
+    FilePluginInterface();
+    virtual ~FilePluginInterface();
 
     virtual QString name() const = 0;
     virtual QIcon icon() const = 0;
@@ -27,8 +28,8 @@ public:
     // передача API (MainWindow)
     virtual void setApplicationAPI(ApplicationAPI *api) = 0;
 
-    virtual void initialize() {} // вызывается после setApplicationAPI() 
-    virtual void shutdown() {} // вызывается перед выгрузкой плагина
+    virtual void initialize() = 0; // вызывается после setApplicationAPI() 
+    virtual void shutdown() = 0;// вызывается перед выгрузкой плагина
 };
 
 #define FilePluginInterface_iid "belkin.alexey.FilePluginInterface"

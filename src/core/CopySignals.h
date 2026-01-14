@@ -1,8 +1,9 @@
 #pragma once
 #include <QObject>
 #include <QStringList>
+#include "BelkinExport.h"
 
-class CopySignals : public QObject
+class BELKINCORE_EXPORT CopySignals : public QObject
 {
     Q_OBJECT
 public:
