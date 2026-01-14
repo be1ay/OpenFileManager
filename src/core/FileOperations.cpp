@@ -193,7 +193,8 @@ void FileOperations::copyFilesAsync(const QStringList &srcFiles,
 
 static bool sendToTrash(const QStringList &paths)
 {
-    // Формируем двойной \0-терминированный список путей
+    qDebug() << "sendToTrash called";
+
     QString joined;
 
     for (const QString &p : paths) {
@@ -201,36 +202,24 @@ static bool sendToTrash(const QStringList &paths)
         // Преобразуем путь в нативный формат Windows
         QString native = QDir::toNativeSeparators(p);
 
-        // Добавляем префикс \\?\ для поддержки длинных путей
-        if (!native.startsWith("\\\\?\\")) {
-            native = "\\\\?\\" + native;
-        }
-
-        // Добавляем путь + \0
         joined += native;
         joined += QChar('\0');
     }
 
-    // Завершающий двойной \0
     joined += QChar('\0');
 
-    // Структура операции
     SHFILEOPSTRUCTW op;
     memset(&op, 0, sizeof(op));
 
     op.wFunc = FO_DELETE;
     op.pFrom = (LPCWSTR)joined.utf16();
-
-    // FOF_ALLOWUNDO — отправить в корзину
-    // FOF_NOCONFIRMATION — без подтверждения
-    // FOF_SILENT — без диалогов
     op.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT;
 
     int result = SHFileOperationW(&op);
 
-    // result == 0 → успех
     return (result == 0);
 }
+
 #endif
 
 #ifdef Q_OS_LINUX
