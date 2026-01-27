@@ -154,8 +154,25 @@ void MainWindow::connectSignals()
             this,       &MainWindow::onCopyDropped);
 
     connect(rightPanel, &FilePanel::copyDropped,
-            this,       &MainWindow::onCopyDropped);
+            this, &MainWindow::onCopyDropped);
 
+    connect(leftPanel, &FilePanel::renameRequested,
+            this, &MainWindow::onRenameRequested);
+
+    connect(rightPanel, &FilePanel::renameRequested,
+            this, &MainWindow::onRenameRequested);
+
+    connect(leftPanel, &FilePanel::copyToBufferRequested,
+            this, &MainWindow::onCopyToBuffer);
+
+    connect(rightPanel, &FilePanel::copyToBufferRequested,
+            this, &MainWindow::onCopyToBuffer);
+
+    connect(leftPanel, &FilePanel::pasteFromBufferRequested,
+            this, &MainWindow::onPasteFromBuffer);
+
+    connect(rightPanel, &FilePanel::pasteFromBufferRequested,
+            this, &MainWindow::onPasteFromBuffer);
 }
 
 void MainWindow::loadPlugins()
@@ -421,6 +438,96 @@ void MainWindow::onDeleteRequested(bool permanent)
     view->setRootIndex(model->index(root));
 }
 
+void MainWindow::onRenameRequested()
+{
+    auto *view  = qobject_cast<QTreeView*>(activeView());
+    auto *model = qobject_cast<QFileSystemModel*>(view->model());
+
+    QModelIndex idx = view->currentIndex();
+    if (!idx.isValid())
+        return;
+
+    QString oldPath = model->filePath(idx);
+    QString oldName = QFileInfo(oldPath).fileName();
+
+    bool ok = false;
+    QString newName = QInputDialog::getText(
+        this,
+        "Rename",
+        "New name:",
+        QLineEdit::Normal,
+        oldName,
+        &ok
+    );
+
+    if (!ok || newName.isEmpty() || newName == oldName)
+        return;
+
+    QString newPath = QFileInfo(oldPath).absoluteDir().absoluteFilePath(newName);
+
+    if (!FileOperations::renamePath(oldPath, newPath)) {
+        QMessageBox::warning(this, "Error", "Failed to rename.");
+        return;
+    }
+
+    // обновляем панель
+    QString root = model->filePath(view->rootIndex());
+    view->setRootIndex(model->index(root));
+}
+
+void MainWindow::onCreateFolderRequested()
+{
+    auto *view  = qobject_cast<QTreeView*>(activeView());
+    auto *model = qobject_cast<QFileSystemModel*>(view->model());
+
+    // Текущая директория активной панели
+    QString root = model->filePath(view->rootIndex());
+    if (root.isEmpty())
+        return;
+
+    // Запрос имени новой папки
+    bool ok = false;
+    QString name = QInputDialog::getText(
+        this,
+        "Create folder",
+        "Folder name:",
+        QLineEdit::Normal,
+        "",
+        &ok
+    );
+
+    if (!ok || name.trimmed().isEmpty())
+        return;
+
+    QString newPath = root + "/" + name.trimmed();
+
+    // Проверка существования
+    if (QFileInfo::exists(newPath)) {
+        QMessageBox::warning(this, "Error", "A file or folder with this name already exists.");
+        return;
+    }
+
+    // Создание папки
+    if (!QDir().mkdir(newPath)) {
+        QMessageBox::warning(this, "Error", "Failed to create folder.");
+        return;
+    }
+
+    // Обновляем панель
+    view->setRootIndex(model->index(root));
+
+    // Выделяем созданную папку
+    QModelIndex idx = model->index(newPath);
+    if (idx.isValid()) {
+        view->selectionModel()->setCurrentIndex(
+            idx,
+            QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows
+        );
+        view->scrollTo(idx);
+    }
+    view->setFocus();
+}
+
 void MainWindow::performCopyOperation()
 {
     auto *srcView  = qobject_cast<QTreeView*>(activeView());
@@ -450,6 +557,21 @@ void MainWindow::performCopyOperation()
 void MainWindow::onCopyFinished()
 {
 
+}
+
+void MainWindow::performDeleteOperation(bool permanent)
+{
+    onDeleteRequested(permanent);
+}
+
+void MainWindow::performRename()
+{
+    onRenameRequested();
+}
+
+void MainWindow::performCreateFolder()
+{
+    onCreateFolderRequested();
 }
 
 
@@ -507,6 +629,35 @@ void MainWindow::onCopyDropped(const QStringList &srcPaths, const QString &dstDi
     dstView->setRootIndex(dstModel->index(dstDir));
 }
 
+void MainWindow::onCopyToBuffer()
+{
+    m_copyBuffer = selectedFiles();
+    if (m_copyBuffer.isEmpty()) {
+        showMessage("Nothing to copy.");
+        return;
+    }
+
+    //showMessage(QString("Copied %1 item(s) to buffer.").arg(m_copyBuffer.size()));
+}
+
+void MainWindow::onPasteFromBuffer()
+{
+    if (m_copyBuffer.isEmpty()) {
+        showMessage("Copy buffer is empty.");
+        return;
+    }
+
+    auto *dstView  = qobject_cast<QTreeView*>(activeView());
+    auto *dstModel = qobject_cast<QFileSystemModel*>(dstView->model());
+
+    QString dstDir = dstModel->filePath(dstView->rootIndex());
+
+    FileOperations::copyFilesAsync(m_copyBuffer, dstDir, this);
+
+    // обновить панель
+    dstView->setRootIndex(dstModel->index(dstDir));
+}
+
 void MainWindow::refreshPanelForPath(const QString &path)
 {
     // Определяем, какая панель является целевой
@@ -523,6 +674,8 @@ void MainWindow::refreshPanelForPath(const QString &path)
     // Обновляем rootIndex (это заставляет модель перечитать директорию)
     panel->refresh();
 }
+
+
 
 
 

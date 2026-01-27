@@ -35,7 +35,10 @@ public:
     QStringList selectedFiles() const override;
     void addContextMenuAction(QAction *action) override;
     CopySignals* copySignals() override { return &m_copySignals; }
-    void performCopyOperation();
+    void performCopyOperation() override;
+    void performDeleteOperation(bool permanent = false) override;
+    void performCreateFolder() override;
+    void performRename() override;
     QWidget* mainWindow() const override { return const_cast<MainWindow*>(this); }
 
 protected:
@@ -47,9 +50,12 @@ private slots:
     void onDeleteRequested(bool permanent);
     void onCopyFinished();
     void onCopyDropped(const QStringList &srcPaths, const QString &dstDir);
+    void onRenameRequested();
+    void onCreateFolderRequested();
+    void onCopyToBuffer();
+    void onPasteFromBuffer();
 
-
-private:
+    private:
     void setupUi();
     void connectSignals();
     void loadPlugins();
@@ -71,4 +77,5 @@ private:
     QMap<FilePluginInterface*, QDockWidget*> m_pluginDocks;
     CopySignals m_copySignals;
     void refreshPanelForPath(const QString &path);
+    QStringList m_copyBuffer;
 };

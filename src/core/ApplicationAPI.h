@@ -24,7 +24,9 @@ public:
     virtual QStringList selectedFiles() const = 0;
     virtual void addContextMenuAction(QAction *action) = 0;
     virtual void performCopyOperation() = 0;
+    virtual void performDeleteOperation(bool permanent = false) = 0;
+    virtual void performCreateFolder() = 0;
+    virtual void performRename() = 0;
     virtual QWidget* mainWindow() const = 0;
 };
-
 #endif // APPLICATIONAPI_H

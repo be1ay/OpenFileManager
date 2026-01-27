@@ -30,7 +30,11 @@ bool FileOperations::copyDirectoryRecursively(const QString &srcPath,
     for (const QFileInfo &entry : entries) {
 
         QString srcFile = entry.absoluteFilePath();
-        QString dstFile = dstPath + "/" + entry.fileName();
+        //QString dstFile = dstPath + "/" + entry.fileName();
+        QString baseName = entry.fileName();
+        QString finalName = FileOperations::uniqueNameInDir(dstPath, baseName);
+        QString dstFile = dstPath + "/" + finalName;
+
 
         if (entry.isDir()) {
 
@@ -129,7 +133,12 @@ bool FileOperations::copyFilesSync(const QStringList &srcFiles,
     for (const QString &srcPath : srcFiles) {
 
         QFileInfo info(srcPath);
-        QString dstPath = dstDir + "/" + info.fileName();
+
+        QString baseName = info.fileName();
+        QString finalName = FileOperations::uniqueNameInDir(dstDir, baseName);
+
+        QString dstPath = dstDir + "/" + finalName;
+
 
         bool ok = false;
 
@@ -364,3 +373,45 @@ bool FileOperations::removeDirectoryRecursively(const QString &path)
 
     return dir.rmdir(path);
 }
+
+bool FileOperations::renamePath(const QString &oldPath, const QString &newPath)
+{
+    return QFile::rename(oldPath, newPath);
+}
+
+QString FileOperations::uniqueNameInDir(const QString &dir, const QString &fileName)
+{
+    QDir d(dir);
+
+    QFileInfo fi(fileName);
+    const QString base   = fi.completeBaseName();
+    const QString suffix = fi.completeSuffix();
+
+    auto makeName = [&](const QString &core) -> QString {
+        return suffix.isEmpty() ? core : core + "." + suffix;
+    };
+
+    QString copyWord = QObject::tr("Copy");
+
+    QString candidate = makeName(base);
+    if (!d.exists(candidate))
+        return candidate;
+
+    candidate = makeName(base + " - " + copyWord);
+    if (!d.exists(candidate))
+        return candidate;
+
+    int counter = 2;
+    while (true) {
+        candidate = makeName(QString("%1 - %2 (%3)")
+                             .arg(base)
+                             .arg(copyWord)
+                             .arg(counter));
+        if (!d.exists(candidate))
+            return candidate;
+        ++counter;
+    }
+}
+
+
+

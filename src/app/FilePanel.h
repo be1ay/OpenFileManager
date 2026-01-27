@@ -36,6 +36,10 @@ signals:
     void copyRequested();
     void activated();
     void copyDropped(const QStringList &srcPaths, const QString &dstDir);
+    void renameRequested();
+    void copyToBufferRequested();
+    void pasteFromBufferRequested();
+
 
 private slots:
     void onUpClicked();

@@ -161,14 +161,35 @@ void FilePanel::onItemActivated(const QModelIndex &idx)
 void FilePanel::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Delete) {
-
         bool permanent = event->modifiers() & Qt::ShiftModifier;
         emit deleteRequested(permanent);
         return;
     }
 
+    if (event->key() == Qt::Key_F8) {
+        emit deleteRequested(false);
+        return;
+    }
+
     if (event->key() == Qt::Key_F5) {
         emit copyRequested();
+        return;
+    }
+
+    if (event->key() == Qt::Key_F2) {
+        emit renameRequested();
+        return;
+    }
+
+    if (event->matches(QKeySequence::Copy))
+    { // Ctrl+C
+        emit copyToBufferRequested();
+        return;
+    }
+
+    if (event->matches(QKeySequence::Paste))
+    { // Ctrl+V
+        emit pasteFromBufferRequested();
         return;
     }
 

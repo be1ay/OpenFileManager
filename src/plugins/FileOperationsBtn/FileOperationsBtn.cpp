@@ -19,12 +19,13 @@ void FileOperationsBtn::execute(const QStringList &files)
     if (m_api) {
         auto btn_panel= m_api->footerBtnPanel();
 
-        copyBtn    = new QPushButton(tr("Copy"));
-        deleteBtn    = new QPushButton(tr("Delete"));
-        newFolderBtn = new QPushButton(tr("New Folder"));
+        copyBtn    = new QPushButton(tr("F5 Copy"));
+        newFolderBtn = new QPushButton(tr("F7 New Folder"));
+        deleteBtn    = new QPushButton(tr("F8 Delete"));
+
         btn_panel->addWidget(copyBtn);
-        btn_panel->addWidget(deleteBtn);
         btn_panel->addWidget(newFolderBtn);
+        btn_panel->addWidget(deleteBtn);
 
         connect(copyBtn,      &QPushButton::clicked, this, &FileOperationsBtn::onCopy);
         connect(deleteBtn,    &QPushButton::clicked, this, &FileOperationsBtn::onDelete);
@@ -45,56 +46,15 @@ QIcon FileOperationsBtn::icon() const
 
 void FileOperationsBtn::onDelete()
 {
-    auto *view  = qobject_cast<QTreeView*>(m_api->activeView());
-    auto *model = qobject_cast<QFileSystemModel*>(view->model());
-
-    const auto sel = view->selectionModel()->selectedRows();
-    if (sel.isEmpty()) {
-        m_api->showMessage("No selection.");
-        return;
-    }
-
-    QStringList paths;
-    for (auto idx : sel)
-        paths << model->filePath(idx);
-
-    // Подтверждение
-    QString msg = "Delete selected items?\n\n" + paths.join("\n");
-    if (QMessageBox::question(nullptr, "Confirm delete", msg) != QMessageBox::Yes)
-        return;
-
-    int count = FileOperations::removePaths(paths, false);
-
-    m_api->showMessage(QString("Deleted %1 items.").arg(count));
-
-    // Обновляем панель
-    QString root = model->filePath(view->rootIndex());
-    view->setRootIndex(model->index(root));
+    m_api->performDeleteOperation();
 }
 
 void FileOperationsBtn::onCopy()
 {
-    m_api->performCopyOperation();  // новый метод в ApplicationAPI
+    m_api->performCopyOperation();
 }
-
 
 void FileOperationsBtn::onNewFolder()
 {
-    auto *view  = qobject_cast<QTreeView*>(m_api->activeView());
-    auto *model = qobject_cast<QFileSystemModel*>(view->model());
-    QString dir = model->filePath(view->rootIndex());
-
-    bool ok;
-    QString name = QInputDialog::getText(
-        m_api->activeView(), "New Folder", "Enter name:", QLineEdit::Normal, "New Folder", &ok);
-
-    if (!ok || name.isEmpty())
-        return;
-
-    if (QDir(dir).mkdir(name)) {
-        m_api->showMessage("Created.");
-        view->setRootIndex(model->index(dir));
-    } else {
-        m_api->showMessage("Could not create folder.");
-    }
+    m_api->performCreateFolder(); 
 }

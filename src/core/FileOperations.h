@@ -32,4 +32,9 @@ public:
     static bool copyFilesSync(const QStringList &srcFiles,
                               const QString &dstDir,
                               ApplicationAPI *api);
+    static bool renamePath(const QString &oldPath, const QString &newPath);
+
+    static QString uniqueNameInDir(const QString &dir, const QString &baseName);
+
+
 };
