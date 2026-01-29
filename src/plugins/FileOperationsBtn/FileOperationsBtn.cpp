@@ -20,14 +20,17 @@ void FileOperationsBtn::execute(const QStringList &files)
         auto btn_panel= m_api->footerBtnPanel();
 
         copyBtn    = new QPushButton(tr("F5 Copy"));
+        moveBtn    = new QPushButton(tr("F6 Move"));
         newFolderBtn = new QPushButton(tr("F7 New Folder"));
         deleteBtn    = new QPushButton(tr("F8 Delete"));
 
         btn_panel->addWidget(copyBtn);
+        btn_panel->addWidget(moveBtn);
         btn_panel->addWidget(newFolderBtn);
         btn_panel->addWidget(deleteBtn);
 
         connect(copyBtn,      &QPushButton::clicked, this, &FileOperationsBtn::onCopy);
+        connect(moveBtn,      &QPushButton::clicked, this, &FileOperationsBtn::onMove);
         connect(deleteBtn,    &QPushButton::clicked, this, &FileOperationsBtn::onDelete);
         connect(newFolderBtn, &QPushButton::clicked, this, &FileOperationsBtn::onNewFolder);
     }
@@ -52,6 +55,11 @@ void FileOperationsBtn::onDelete()
 void FileOperationsBtn::onCopy()
 {
     m_api->performCopyOperation();
+}
+
+void FileOperationsBtn::onMove()
+{
+    m_api->performMoveOperation();
 }
 
 void FileOperationsBtn::onNewFolder()

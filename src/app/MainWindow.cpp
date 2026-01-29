@@ -173,6 +173,12 @@ void MainWindow::connectSignals()
 
     connect(rightPanel, &FilePanel::pasteFromBufferRequested,
             this, &MainWindow::onPasteFromBuffer);
+
+    connect(leftPanel, &FilePanel::moveRequested,
+            this, &MainWindow::performMoveOperation);
+
+    connect(rightPanel, &FilePanel::moveRequested,
+            this, &MainWindow::performMoveOperation);
 }
 
 void MainWindow::loadPlugins()
@@ -657,7 +663,34 @@ void MainWindow::onPasteFromBuffer()
     // обновить панель
     dstView->setRootIndex(dstModel->index(dstDir));
 }
+void MainWindow::performMoveOperation()
+{
+    auto *srcView  = qobject_cast<QTreeView*>(activeView());
+    auto *dstView  = qobject_cast<QTreeView*>(passiveView());
 
+    auto *srcModel = qobject_cast<QFileSystemModel*>(srcView->model());
+    auto *dstModel = qobject_cast<QFileSystemModel*>(dstView->model());
+
+    const auto sel = srcView->selectionModel()->selectedRows();
+    if (sel.isEmpty()) {
+        showMessage("No selection.");
+        return;
+    }
+
+    QStringList files;
+    for (auto idx : sel)
+        files << srcModel->filePath(idx);
+
+    const QString dstDir = dstModel->filePath(dstView->rootIndex());
+
+    //FileOperations::moveFilesSync(files, dstDir, this);
+    FileOperations::moveFilesAsync(files, dstDir, this);
+
+
+    // обновить панели
+    srcView->setRootIndex(srcModel->index(srcModel->filePath(srcView->rootIndex())));
+    dstView->setRootIndex(dstModel->index(dstDir));
+}
 void MainWindow::refreshPanelForPath(const QString &path)
 {
     // Определяем, какая панель является целевой
@@ -674,6 +707,8 @@ void MainWindow::refreshPanelForPath(const QString &path)
     // Обновляем rootIndex (это заставляет модель перечитать директорию)
     panel->refresh();
 }
+
+
 
 
 

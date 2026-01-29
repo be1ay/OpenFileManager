@@ -4,6 +4,7 @@
 #include <QString>
 #include <QWidget>
 #include "BelkinExport.h"
+#include "FileOpType.h"
 
 class FilePluginInterface;
 class QHBoxLayout;
@@ -27,6 +28,7 @@ public:
     virtual void performDeleteOperation(bool permanent = false) = 0;
     virtual void performCreateFolder() = 0;
     virtual void performRename() = 0;
+    virtual void performMoveOperation() = 0;
     virtual QWidget* mainWindow() const = 0;
 };
 #endif // APPLICATIONAPI_H

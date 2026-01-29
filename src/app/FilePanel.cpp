@@ -176,6 +176,11 @@ void FilePanel::keyPressEvent(QKeyEvent *event)
         return;
     }
 
+    if (event->key() == Qt::Key_F6) {
+        emit moveRequested();
+        return;
+    }
+
     if (event->key() == Qt::Key_F2) {
         emit renameRequested();
         return;

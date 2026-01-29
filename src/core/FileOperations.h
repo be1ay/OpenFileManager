@@ -27,6 +27,9 @@ public:
     static void copyFilesAsync(const QStringList &srcFiles,
                                const QString &dstDir,
                                ApplicationAPI *api);
+    static void moveFilesAsync(const QStringList &srcFiles,
+                               const QString &dstDir,
+                               ApplicationAPI *api);
 
     // синхронный вариант (используется только внутри потока)
     static bool copyFilesSync(const QStringList &srcFiles,
@@ -35,6 +38,11 @@ public:
     static bool renamePath(const QString &oldPath, const QString &newPath);
 
     static QString uniqueNameInDir(const QString &dir, const QString &baseName);
+
+    static bool moveFilesSync(const QStringList &srcFiles,
+                          const QString &dstDir,
+                          ApplicationAPI *api);
+
 
 
 };

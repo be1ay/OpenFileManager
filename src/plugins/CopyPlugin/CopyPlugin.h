@@ -30,7 +30,7 @@ public:
     void execute(const QStringList &files) override {} // не используется
 
 private slots:
-    void onCopyStarted(const QStringList &files, const QString &targetDir);
+    void onCopyStarted(const QStringList &files, const QString &targetDir, FileOpType opType);
     void onCopyProgress(int fileIndex, qint64 copied, qint64 total, double speedMB);
     void onCopyFinished();
     void onCopyError(const QString &path);

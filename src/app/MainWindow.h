@@ -39,6 +39,7 @@ public:
     void performDeleteOperation(bool permanent = false) override;
     void performCreateFolder() override;
     void performRename() override;
+    void performMoveOperation() override;
     QWidget* mainWindow() const override { return const_cast<MainWindow*>(this); }
 
 protected:

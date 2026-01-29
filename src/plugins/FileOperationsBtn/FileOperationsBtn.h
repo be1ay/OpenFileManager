@@ -30,6 +30,7 @@ signals:
 
 private slots:
     void onCopy();
+    void onMove();
     void onDelete();
     void onNewFolder();
 
@@ -37,6 +38,7 @@ private:
     ApplicationAPI *m_api = nullptr;
 
      QPushButton        *copyBtn;
+     QPushButton        *moveBtn;
      QPushButton        *deleteBtn;
      QPushButton        *newFolderBtn;
 };

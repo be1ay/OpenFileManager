@@ -31,7 +31,7 @@ void CopyPlugin::shutdown()
     }
 }
 
-void CopyPlugin::onCopyStarted(const QStringList &files, const QString &targetDir)
+void CopyPlugin::onCopyStarted(const QStringList &files, const QString &targetDir,FileOpType opType)
 {
     if (m_dialog) {
         m_dialog->close();
@@ -40,7 +40,7 @@ void CopyPlugin::onCopyStarted(const QStringList &files, const QString &targetDi
 
     QWidget *mw = m_api->mainWindow();
 
-    m_dialog = new CopyProgressDialog(files.size(), mw);
+    m_dialog = new CopyProgressDialog(files.size(), opType, mw);
     m_dialog->setAttribute(Qt::WA_DeleteOnClose);
     m_dialog->setWindowModality(Qt::NonModal);
     m_dialog->setWindowFlags(Qt::Dialog | Qt::WindowStaysOnTopHint);

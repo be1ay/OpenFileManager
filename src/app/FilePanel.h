@@ -39,6 +39,8 @@ signals:
     void renameRequested();
     void copyToBufferRequested();
     void pasteFromBufferRequested();
+    void moveRequested();
+
 
 
 private slots:

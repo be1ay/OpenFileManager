@@ -121,7 +121,7 @@ bool FileOperations::copyFilesSync(const QStringList &srcFiles,
 {
     auto *sig = api->copySignals();
     if (sig)
-        sig->copyStarted(srcFiles, dstDir);
+        sig->copyStarted(srcFiles, dstDir, FileOpType::Copy);
 
     if (srcFiles.isEmpty()) {
         if (sig) sig->copyFinished();
@@ -172,13 +172,13 @@ void FileOperations::copyFilesAsync(const QStringList &srcFiles,
     // если файлов нет — даже поток не создаём
     if (srcFiles.isEmpty()) {
         if (auto *sig = api->copySignals()) {
-            sig->copyStarted(srcFiles, dstDir);
+            sig->copyStarted(srcFiles, dstDir,FileOpType::Copy);
             sig->copyFinished();
         }
         return;
     }
 
-    auto *worker = new CopyWorkerCore(srcFiles, dstDir, api);
+    auto *worker = new CopyWorkerCore(srcFiles, dstDir, api,FileOpType::Copy);
     auto *thread = new QThread;
 
     worker->moveToThread(thread);
@@ -195,6 +195,37 @@ void FileOperations::copyFilesAsync(const QStringList &srcFiles,
 
     thread->start();
 }
+
+void FileOperations::moveFilesAsync(const QStringList &srcFiles,
+                                    const QString &dstDir,
+                                    ApplicationAPI *api)
+{
+    if (srcFiles.isEmpty()) {
+        if (auto *sig = api->copySignals()) {
+            sig->copyStarted(srcFiles, dstDir,FileOpType::Move);
+            sig->copyFinished();
+        }
+        return;
+    }
+
+    auto *worker = new CopyWorkerCore(srcFiles, dstDir, api, FileOpType::Move);
+    auto *thread = new QThread;
+
+    worker->moveToThread(thread);
+
+    QObject::connect(thread, &QThread::started,
+                     worker, &CopyWorkerCore::start);
+
+    QObject::connect(worker, &CopyWorkerCore::finished,
+                     thread,  &QThread::quit);
+    QObject::connect(worker, &CopyWorkerCore::finished,
+                     worker,  &CopyWorkerCore::deleteLater);
+    QObject::connect(thread, &QThread::finished,
+                     thread,  &QThread::deleteLater);
+
+    thread->start();
+}
+
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -383,24 +414,37 @@ QString FileOperations::uniqueNameInDir(const QString &dir, const QString &fileN
 {
     QDir d(dir);
 
-    QFileInfo fi(fileName);
-    const QString base   = fi.completeBaseName();
-    const QString suffix = fi.completeSuffix();
+    // Разбираем имя вручную, чтобы корректно обрабатывать много точек
+    int lastDot = fileName.lastIndexOf('.');
+
+    QString base;
+    QString ext;
+
+    if (lastDot > 0) {
+        base = fileName.left(lastDot);       // всё до последней точки
+        ext  = fileName.mid(lastDot + 1);    // всё после последней точки
+    } else {
+        base = fileName;
+        ext  = "";
+    }
 
     auto makeName = [&](const QString &core) -> QString {
-        return suffix.isEmpty() ? core : core + "." + suffix;
+        return ext.isEmpty() ? core : core + "." + ext;
     };
 
     QString copyWord = QObject::tr("Copy");
 
+    // 1. Базовое имя
     QString candidate = makeName(base);
     if (!d.exists(candidate))
         return candidate;
 
+    // 2. "base - Copy"
     candidate = makeName(base + " - " + copyWord);
     if (!d.exists(candidate))
         return candidate;
 
+    // 3. "base - Copy (2)", "base - Copy (3)", ...
     int counter = 2;
     while (true) {
         candidate = makeName(QString("%1 - %2 (%3)")
@@ -409,9 +453,126 @@ QString FileOperations::uniqueNameInDir(const QString &dir, const QString &fileN
                              .arg(counter));
         if (!d.exists(candidate))
             return candidate;
-        ++counter;
+        counter++;
     }
 }
+
+#ifdef _WIN32
+#include <windows.h>
+
+bool sameDevice(const QString &a, const QString &b)
+{
+    wchar_t volA[MAX_PATH], volB[MAX_PATH];
+
+    if (!GetVolumePathNameW((LPCWSTR)a.utf16(), volA, MAX_PATH))
+        return false;
+
+    if (!GetVolumePathNameW((LPCWSTR)b.utf16(), volB, MAX_PATH))
+        return false;
+
+    wchar_t fsA[MAX_PATH], fsB[MAX_PATH];
+    DWORD serialA = 0, serialB = 0;
+
+    GetVolumeInformationW(volA, nullptr, 0, &serialA, nullptr, nullptr, fsA, MAX_PATH);
+    GetVolumeInformationW(volB, nullptr, 0, &serialB, nullptr, nullptr, fsB, MAX_PATH);
+
+    return serialA == serialB;
+}
+#else
+#include <sys/stat.h>
+#include <unistd.h>
+
+bool sameDevice(const QString &pathA, const QString &pathB)
+{
+    struct stat stA{}, stB{};
+
+    if (stat(pathA.toUtf8().constData(), &stA) != 0)
+        return false;
+
+    if (stat(pathB.toUtf8().constData(), &stB) != 0)
+        return false;
+
+    return stA.st_dev == stB.st_dev;
+}
+#endif
+bool FileOperations::moveFilesSync(const QStringList &srcFiles,
+                                   const QString &dstDir,
+                                   ApplicationAPI *api)
+{
+    if (srcFiles.isEmpty())
+        return true;
+
+    auto *sig = api->copySignals();
+    if (sig)
+        sig->copyStarted(srcFiles, dstDir, FileOpType::Move);
+
+    int fileIndex = 0;
+
+    for (const QString &srcPath : srcFiles)
+    {
+        QFileInfo info(srcPath);
+        const QString srcDir = info.absolutePath();
+        const QString baseName = info.fileName();
+
+        // 0. Перемещение в ту же директорию — бессмысленно, просто пропускаем
+        if (QDir::cleanPath(srcDir) == QDir::cleanPath(dstDir)) {
+            qDebug() << "Move in same dir, skip:" << srcPath;
+            ++fileIndex;
+            continue;
+        }
+
+        // Путь назначения без авто-ренейминга
+        QString dstPathRaw = dstDir + "/" + baseName;
+
+        // 1. Попытка быстрого перемещения (rename) на одном устройстве
+        if (sameDevice(srcDir, dstDir)) {
+
+            // src и dst разные директории, но имя то же — это нормальный move
+            if (QFile::rename(srcPath, dstPathRaw)) {
+                qDebug() << "Fast rename:" << srcPath << "->" << dstPathRaw;
+                if (sig)
+                    emit sig->copyProgress(fileIndex, 1, 1, 0);
+                ++fileIndex;
+                continue;
+            }
+
+            qDebug() << "Rename failed, fallback to copy:" << srcPath;
+        } else {
+            qDebug() << "Different FS, copy+delete:" << srcPath;
+        }
+
+        // 2. COPY + DELETE с уникальным именем (как при копировании)
+        QString finalName = FileOperations::uniqueNameInDir(dstDir, baseName);
+        QString dstPath   = dstDir + "/" + finalName;
+
+        bool ok = false;
+
+        if (info.isDir()) {
+            ok = copyDirectoryRecursively(srcPath, dstPath, api, fileIndex);
+        } else {
+            ok = copyFileWithProgress(srcPath, dstPath, fileIndex, api);
+        }
+
+        if (!ok) {
+            if (sig) {
+                sig->copyError(srcPath);
+                sig->copyFinished();
+            }
+            return false;
+        }
+
+        FileOperations::removePaths({srcPath}, false);
+        ++fileIndex;
+    }
+
+    if (sig)
+        sig->copyFinished();
+
+    return true;
+}
+
+
+
 
 
 

@@ -10,10 +10,14 @@ class CopyProgressDialog : public QDialog
 {
     Q_OBJECT
 public:
-    CopyProgressDialog(int fileCount, QWidget *parent = nullptr)
+    CopyProgressDialog(int fileCount, FileOpType opType, QWidget *parent = nullptr)
         : QDialog(parent)
     {
-        setWindowTitle("Copying files...");
+        if (opType == FileOpType::Copy)
+            setWindowTitle(tr("Copying files..."));
+        else
+            setWindowTitle(tr("Moving files..."));
+
         setMinimumWidth(420);
 
         m_fileLabel = new QLabel("File 1 of " + QString::number(fileCount));
