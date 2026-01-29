@@ -224,8 +224,6 @@ void MainWindow::loadPlugins()
         }
 
         if(!iface->backgroundPlugin()){
-            qDebug() << QFile::exists(":/icons/default_plugin.png");
-
             // добавить кнопку на тулбар — при клике вызываем execute()
             QAction *act = m_pluginToolBar->addAction(iface->icon().isNull() ? QIcon(":/icons/default_plugin.png") : iface->icon(), iface->name());
             connect(act, &QAction::triggered, this, [this, iface]() {

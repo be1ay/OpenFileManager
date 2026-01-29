@@ -26,6 +26,8 @@ FilePanel::FilePanel(QWidget *parent)
     m_view->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_view->setColumnWidth(0, 250);
     m_view->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_view->setItemsExpandable(false);
+    m_view->setExpandsOnDoubleClick(false);
     
 //Drag&Drop
     m_view->setDragEnabled(true);
@@ -140,6 +142,7 @@ void FilePanel::onUpClicked()
 void FilePanel::onDriveChanged(const QString &drive)
 {
     m_currentPath = drive;
+    qDebug()<<m_currentPath;
     m_view->setRootIndex(m_model->index(drive));
     m_pathLabel->setText(drive);
     updateDriveBoxSelection();
