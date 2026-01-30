@@ -20,6 +20,12 @@ jobs:
           version: '6.8.1'
           cache: true
       
+      - name: Install vcpkg
+        uses: microsoft/vcpkg-action@v1
+
+      - name: Install Boost
+        run: vcpkg install boost-filesystem boost-system
+
       - name: Configure and Build
         run: |
           cmake -B build -S . -DPATCH_VERSION=${{ github.run_number }}
