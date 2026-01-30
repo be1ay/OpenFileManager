@@ -22,7 +22,7 @@ public:
     QModelIndex lastIndex()const {return m_lastIndex; }
     void setPath(const QString &path);
     void refresh();
-
+    bool selectFile(const QString& filePath);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;

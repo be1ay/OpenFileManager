@@ -276,3 +276,47 @@ void FilePanel::refresh()
     m_view->setRootIndex(idx);
     updateDriveBoxSelection();
 }
+
+bool FilePanel::selectFile(const QString& filePath)
+{
+    if (!m_model || !m_view)
+        return false;
+
+    QFileInfo info(filePath);
+    if (!info.exists())
+        return false;
+
+    const QString dir = info.absolutePath();
+
+    // Если мы не в нужной папке — переходим
+    if (m_currentPath != dir) {
+        setPath(dir);  // твой метод, который меняет rootIndex
+    }
+
+    // Теперь получаем индекс файла уже в текущем rootIndex
+    QModelIndex index = m_model->index(filePath);
+    if (!index.isValid())
+        return false;
+
+    // Нормализуем к колонке 0
+    index = index.sibling(index.row(), 0);
+
+    // Выделяем файл
+    m_view->setCurrentIndex(index);
+    if (auto *sel = m_view->selectionModel()) {
+        sel->setCurrentIndex(
+            index,
+            QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows
+        );
+    }
+
+    // Скроллим к файлу
+    m_view->scrollTo(index, QAbstractItemView::PositionAtCenter);
+
+    // Обновляем lastIndex
+    m_lastIndex = index;
+
+    return true;
+}
+
+

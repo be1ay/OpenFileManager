@@ -30,5 +30,6 @@ public:
     virtual void performRename() = 0;
     virtual void performMoveOperation() = 0;
     virtual QWidget* mainWindow() const = 0;
+    virtual void navigateToFile(const QString& path) = 0;
 };
 #endif // APPLICATIONAPI_H

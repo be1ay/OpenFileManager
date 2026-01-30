@@ -41,6 +41,7 @@ public:
     void performRename() override;
     void performMoveOperation() override;
     QWidget* mainWindow() const override { return const_cast<MainWindow*>(this); }
+    void navigateToFile(const QString& path) override;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;

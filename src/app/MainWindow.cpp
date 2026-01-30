@@ -318,6 +318,16 @@ void MainWindow::setActivePanel(QWidget *view)
 
     updateActiveStyles();
 }
+static FilePanel* findPanelFromView(QWidget* view)
+{
+    QWidget* w = view;
+    while (w) {
+        if (auto* panel = qobject_cast<FilePanel*>(w))
+            return panel;
+        w = w->parentWidget();
+    }
+    return nullptr;
+}
 
 void MainWindow::updateActiveStyles()
 {
@@ -706,12 +716,11 @@ void MainWindow::refreshPanelForPath(const QString &path)
     panel->refresh();
 }
 
+void MainWindow::navigateToFile(const QString& path)
+{
+    qDebug()<<path <<" MainWindow::navigateToFile";
 
-
-
-
-
-
-
-
-
+    if (auto *panel = findPanelFromView(currentActiveView)){
+        panel->selectFile(path);
+    }
+}

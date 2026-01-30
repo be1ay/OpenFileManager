@@ -27,3 +27,11 @@ set_target_properties(CopyPlugin PROPERTIES
     OUTPUT_NAME "copyplugin"
    # SUFFIX ".dll"       # Windows
 )
+
+add_custom_command(TARGET CopyPlugin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "$<TARGET_FILE_DIR:BelkinCommander>/plugins"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<TARGET_FILE:CopyPlugin>"
+        "$<TARGET_FILE_DIR:BelkinCommander>/plugins/"
+)

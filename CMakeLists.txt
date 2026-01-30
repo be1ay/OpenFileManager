@@ -75,16 +75,6 @@ target_link_libraries(BelkinCommander
 # -----------------------------
 add_subdirectory(src/plugins)
 
-foreach(plugin_target IN LISTS PLUGIN_TARGETS)
-add_custom_command(TARGET BelkinCommander POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:BelkinCommander>/plugins"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:${plugin_target}>
-                "$<TARGET_FILE_DIR:BelkinCommander>/plugins/"
-            COMMENT "Копирование плагина ${plugin_target}..."
-        )
-endforeach()
-
 # Настройки для создания пакета
 # --- Правила установки (cmake --install) ---
 
