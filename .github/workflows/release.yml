@@ -20,11 +20,8 @@ jobs:
           version: '6.8.1'
           cache: true
       
-      - name: Install vcpkg
-        uses: microsoft/vcpkg-action@v1
-
       - name: Install Boost
-        run: vcpkg install boost-filesystem boost-system
+        run: sudo apt-get install -y libboost-all-dev
 
       - name: Configure and Build
         run: |
