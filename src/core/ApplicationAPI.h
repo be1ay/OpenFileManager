@@ -16,7 +16,7 @@ public:
     virtual ~ApplicationAPI() = default;
     virtual CopySignals* copySignals() = 0;
 
-    virtual QString currentFilePath() const = 0;
+    virtual QString currentDirectory() const = 0;
     virtual void showMessage(const QString &msg) = 0;
     virtual void showDockForPlugin(FilePluginInterface *plugin) = 0;
     virtual QHBoxLayout* footerBtnPanel() const = 0;

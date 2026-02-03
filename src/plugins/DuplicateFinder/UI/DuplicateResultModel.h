@@ -1,6 +1,6 @@
 #pragma once
 #include <QAbstractTableModel>
-#include "duplicate_finder.hpp"
+#include "duplicate_finder.h"
 
 class DuplicateResultModel : public QAbstractTableModel
 {

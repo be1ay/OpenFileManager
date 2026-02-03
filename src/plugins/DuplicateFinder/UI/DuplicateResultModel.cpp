@@ -1,4 +1,4 @@
-#include "DuplicateResultModel.hpp"
+#include "DuplicateResultModel.h"
 
 DuplicateResultModel::DuplicateResultModel(QObject* parent)
     : QAbstractTableModel(parent)

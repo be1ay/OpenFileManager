@@ -17,7 +17,7 @@ public:
 
     void execute(const QStringList &files) override;
 
-    QIcon icon() const override { return QIcon(); }
+    QIcon icon() const override;
     void setApplicationAPI(ApplicationAPI *api) override { m_api = api; }
 
     bool showWidget() const override { return false; }   // dock НЕ нужен
@@ -29,6 +29,7 @@ public:
     void shutdown() override;
 
 private:
+    void runDialog(const QString& initialDir);
     ApplicationAPI* m_api = nullptr;
     QList<QAction*> m_actions;
 };

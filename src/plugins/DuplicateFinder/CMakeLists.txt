@@ -8,16 +8,18 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 set(CMAKE_AUTOMOC ON)
 include_directories(${CMAKE_SOURCE_DIR}/../..)  # путь к интерфейсу
 
+
 add_library(DuplicateFinder SHARED
-    core/duplicate_finder.hpp
+    core/duplicate_finder.h
     core/duplicate_finder.cpp
     core/utils.cpp
-    core/utils.hpp
-    UI/DuplicateFinderDialog.hpp
+    core/utils.h
+    UI/DuplicateFinderDialog.h
     UI/DuplicateFinderDialog.cpp
-    UI/DuplicateResultModel.hpp
+    UI/DuplicateResultModel.h
     UI/DuplicateResultModel.cpp
-    DuplicateFinderPlugin.hpp
+    UI/DuplicateFinder.qrc
+    DuplicateFinderPlugin.h
     DuplicateFinderPlugin.cpp
 )
 

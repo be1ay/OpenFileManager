@@ -1,5 +1,5 @@
-#include "DuplicateFinderPlugin.hpp"
-#include "DuplicateFinderDialog.hpp"
+#include "DuplicateFinderPlugin.h"
+#include "DuplicateFinderDialog.h"
 
 #include <QAction>
 #include <QApplication>
@@ -9,25 +9,9 @@ void DuplicateFinderPlugin::initialize()
 {
     QAction* act = new QAction("Поиск дубликатов");
 
-    connect(act, &QAction::triggered, this, [this]() {
-        // Создаём диалог
-        DuplicateFinderDialog dlg;
-
-        // Центрируем относительно главного окна приложения
-        if (m_api && m_api->mainWindow()) {
-            QWidget* mw = m_api->mainWindow();
-            dlg.setParent(mw, Qt::Dialog);
-
-            QRect mwRect = mw->geometry();
-            QRect dlgRect = dlg.geometry();
-
-            dlg.move(
-                mwRect.center().x() - dlgRect.width() / 2,
-                mwRect.center().y() - dlgRect.height() / 2
-            );
-        }
-
-        dlg.exec();
+    connect(act, &QAction::triggered, this, [this](){
+        QString initialDir = m_api->currentDirectory();
+        runDialog(initialDir); 
     });
 
     m_api->addContextMenuAction(act);
@@ -36,9 +20,29 @@ void DuplicateFinderPlugin::initialize()
 
 void DuplicateFinderPlugin::execute(const QStringList &files)
 {
-    // Можно игнорировать files — поиск не зависит от выделенных файлов
-    // Просто показываем диалог
+    runDialog("");
+}
+
+
+void DuplicateFinderPlugin::shutdown()
+{
+    for (QAction* a : m_actions)
+        delete a;
+
+    m_actions.clear();
+}
+
+QIcon DuplicateFinderPlugin::icon() const
+{
+    return QIcon(":/duplicatefinder/icons/duplicate.png");
+}
+
+void DuplicateFinderPlugin::runDialog(const QString& initialDir)
+{
     DuplicateFinderDialog dlg;
+
+    if (!initialDir.isEmpty())
+        dlg.setInitialDirectory(initialDir);
 
     if (m_api && m_api->mainWindow()) {
         QWidget* mw = m_api->mainWindow();
@@ -58,13 +62,5 @@ void DuplicateFinderPlugin::execute(const QStringList &files)
         if (!path.isEmpty())
             m_api->navigateToFile(path);
     }
-
 }
 
-void DuplicateFinderPlugin::shutdown()
-{
-    for (QAction* a : m_actions)
-        delete a;
-
-    m_actions.clear();
-}

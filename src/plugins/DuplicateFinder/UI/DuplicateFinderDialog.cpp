@@ -1,5 +1,5 @@
-#include "DuplicateFinderDialog.hpp"
-#include "DuplicateResultModel.hpp"
+#include "DuplicateFinderDialog.h"
+#include "DuplicateResultModel.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -206,6 +206,31 @@ void DuplicateFinderDialog::onResultDoubleClicked(const QModelIndex& index)
     auto* model = qobject_cast<DuplicateResultModel*>(resultTable_->model());
     selectedPath_ = model->filePathAt(index.row());
     accept();
+}
+
+void DuplicateFinderDialog::setInitialDirectory(const QString& dir)
+{
+    initialDir_ = dir;
+}
+
+bool containsItem(QListWidget* list, const QString& text)
+{
+    for (int i = 0; i < list->count(); ++i) {
+        if (list->item(i)->text() == text)
+            return true;
+    }
+    return false;
+}
+
+void DuplicateFinderDialog::showEvent(QShowEvent* event)
+{
+    QDialog::showEvent(event);
+
+    if (!initialDir_.isEmpty()) {
+        if (!containsItem(scanDirsList_, initialDir_)) {
+            scanDirsList_->addItem(initialDir_);
+        }
+    }
 }
 
 

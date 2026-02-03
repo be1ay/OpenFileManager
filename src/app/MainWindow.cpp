@@ -60,20 +60,6 @@ MainWindow::~MainWindow()
     unloadPlugins();
 }
 
-QString MainWindow::currentFilePath() const {
-    auto *view = qobject_cast<QTreeView*>(activeView());
-    if (!view)
-        return {};
-
-    auto selection = view->selectionModel()->selectedRows();
-    if (selection.isEmpty())
-        return {}; // ничего не выбрано — вернём пустую строку
-
-    QModelIndex idx = selection.first();
-    return static_cast<QFileSystemModel*>(view->model())->filePath(idx);
-}
-
-
 void MainWindow::showMessage(const QString &msg)
 {
     QMessageBox::information(this, "Plugin Message", msg);
@@ -723,4 +709,14 @@ void MainWindow::navigateToFile(const QString& path)
     if (auto *panel = findPanelFromView(currentActiveView)){
         panel->selectFile(path);
     }
+}
+
+QString MainWindow::currentDirectory() const
+{
+    if (auto* view = activeView()) {
+        if (auto* panel = findPanelFromView(view)) {
+            return panel->currentPath();
+        }
+    }
+    return {};
 }

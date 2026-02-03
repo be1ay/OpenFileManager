@@ -1,6 +1,6 @@
-#include "duplicate_finder.hpp"
+#include "duplicate_finder.h"
 #include <boost/unordered_map.hpp>
-#include "utils.hpp"
+#include "utils.h"
 #include <set>
 
 using namespace duplicate_finder;

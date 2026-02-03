@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/duplicatefinder">
+        <file>icons/duplicate.png</file>
+    </qresource>
+</RCC>
+

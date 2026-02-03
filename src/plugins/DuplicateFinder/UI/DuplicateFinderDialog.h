@@ -6,7 +6,7 @@
 #include <QComboBox>
 #include <QTableView>
 #include <QPushButton>
-#include "duplicate_finder.hpp"
+#include "duplicate_finder.h"
 
 class DuplicateFinderDialog : public QDialog
 {
@@ -14,6 +14,10 @@ class DuplicateFinderDialog : public QDialog
 public:
     explicit DuplicateFinderDialog(QWidget* parent = nullptr);
     QString selectedPath() const { return selectedPath_; }
+    void setInitialDirectory(const QString& dir);
+
+protected:
+    void showEvent(QShowEvent* event) override;
 
 
 private slots:
@@ -40,4 +44,5 @@ private:
     QTableView* resultTable_;
     QPushButton* runButton_;
     QString selectedPath_;
+    QString initialDir_;
 };

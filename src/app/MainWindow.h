@@ -23,7 +23,7 @@ class MainWindow : public QMainWindow, public ApplicationAPI
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
-    QString currentFilePath() const override;
+    QString currentDirectory() const override;
     void showMessage(const QString &msg) override;
     //void addDockWidget(QWidget *widget, const QString &title) override;
     void addDockWidgetForPlugin(FilePluginInterface *plugin, QWidget *widget, const QString &title);
