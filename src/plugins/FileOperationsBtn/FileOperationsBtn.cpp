@@ -64,5 +64,18 @@ void FileOperationsBtn::onMove()
 
 void FileOperationsBtn::onNewFolder()
 {
-    m_api->performCreateFolder(); 
+    m_api->performCreateFolder();
+}
+
+void FileOperationsBtn::initialize()
+{
+    m_api->registerShortcut(QKeySequence(Qt::Key_F5), this, SLOT(onCopy()));
+    m_api->registerShortcut(QKeySequence(Qt::Key_F6), this, SLOT(onMove()));
+    m_api->registerShortcut(QKeySequence(Qt::Key_F7), this, SLOT(onNewFolder()));
+    m_api->registerShortcut(QKeySequence(Qt::Key_F8), this, SLOT(onDelete()));
+}
+
+void FileOperationsBtn::shutdown()
+{
+    m_api->unregisterShortcuts(this);
 }

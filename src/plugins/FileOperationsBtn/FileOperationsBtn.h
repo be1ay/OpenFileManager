@@ -23,8 +23,8 @@ public:
 
     QWidget* createWidget() override;
     
-    void initialize() override {};
-    void shutdown() override {};
+    void initialize() override;
+    void shutdown() override;
 signals:
     void deleteRequested();
 

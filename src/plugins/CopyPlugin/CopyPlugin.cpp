@@ -20,7 +20,6 @@ void CopyPlugin::initialize()
     connect(sig, &CopySignals::copyError,
             this, &CopyPlugin::onCopyError);
 
-    qDebug() << "[CopyPlugin] initialized";
 }
 
 void CopyPlugin::shutdown()
