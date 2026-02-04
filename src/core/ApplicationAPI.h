@@ -10,6 +10,8 @@ class FilePluginInterface;
 class QHBoxLayout;
 class QAction;
 class CopySignals;
+class QShortcut;
+class QKeySequence;
 
 class BELKINCORE_EXPORT ApplicationAPI {
 public:
@@ -31,5 +33,9 @@ public:
     virtual void performMoveOperation() = 0;
     virtual QWidget* mainWindow() const = 0;
     virtual void navigateToFile(const QString& path) = 0;
+    virtual QShortcut* registerShortcut(const QKeySequence& seq,
+                                   QObject* pluginInstance,
+                                   const char* slot) = 0;
+    virtual void unregisterShortcuts(QObject* pluginInstance) = 0 ;
 };
 #endif // APPLICATIONAPI_H

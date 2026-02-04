@@ -28,8 +28,10 @@ public:
     void initialize() override;
     void shutdown() override;
 
-private:
+private slots:
+    void onShortcutTriggered();
+
+    private:
     void runDialog(const QString& initialDir);
     ApplicationAPI* m_api = nullptr;
-    QList<QAction*> m_actions;
 };

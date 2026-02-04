@@ -15,6 +15,7 @@ class FilePluginInterface;
 class QToolBar;
 class QDockWidget;
 class QHBoxLayout;
+class ShortcutManager;
 
 class MainWindow : public QMainWindow, public ApplicationAPI
 {
@@ -42,6 +43,10 @@ public:
     void performMoveOperation() override;
     QWidget* mainWindow() const override { return const_cast<MainWindow*>(this); }
     void navigateToFile(const QString& path) override;
+    QShortcut* registerShortcut(const QKeySequence& sc,
+                                           QObject* pluginInstance,
+                                           const char* slot) override;
+    void unregisterShortcuts(QObject* pluginInstance) override;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -80,4 +85,5 @@ private slots:
     CopySignals m_copySignals;
     void refreshPanelForPath(const QString &path);
     QStringList m_copyBuffer;
+    ShortcutManager* m_shortcutManager;
 };

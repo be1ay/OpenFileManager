@@ -4,10 +4,12 @@
 #include <QAction>
 #include <QApplication>
 #include <QWidget>
+#include <QShortcut>
+#include <QKeySequence>
 
 void DuplicateFinderPlugin::initialize()
 {
-    QAction* act = new QAction("Поиск дубликатов");
+    QAction* act = new QAction("Поиск дубликатов",this);
 
     connect(act, &QAction::triggered, this, [this](){
         QString initialDir = m_api->currentDirectory();
@@ -15,7 +17,8 @@ void DuplicateFinderPlugin::initialize()
     });
 
     m_api->addContextMenuAction(act);
-    m_actions.append(act);
+    
+    m_api->registerShortcut( QKeySequence("Ctrl+Shift+D"), this, SLOT(onShortcutTriggered()) );
 }
 
 void DuplicateFinderPlugin::execute(const QStringList &files)
@@ -26,10 +29,7 @@ void DuplicateFinderPlugin::execute(const QStringList &files)
 
 void DuplicateFinderPlugin::shutdown()
 {
-    for (QAction* a : m_actions)
-        delete a;
-
-    m_actions.clear();
+    m_api->unregisterShortcuts(this);
 }
 
 QIcon DuplicateFinderPlugin::icon() const
@@ -62,5 +62,9 @@ void DuplicateFinderPlugin::runDialog(const QString& initialDir)
         if (!path.isEmpty())
             m_api->navigateToFile(path);
     }
+}
+
+void DuplicateFinderPlugin::onShortcutTriggered(){
+    execute({});
 }
 

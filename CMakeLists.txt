@@ -61,6 +61,8 @@ add_executable(BelkinCommander WIN32
     src/app/FilePanel.cpp
     src/app/FilePanel.h
     src/app/FileView.hpp
+    src/app/ShortcutManager.h
+    src/app/ShortcutManager.cpp
 )
 
 target_link_libraries(BelkinCommander

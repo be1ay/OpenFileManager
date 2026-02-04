@@ -13,11 +13,12 @@
 #include <QResource>
 #include <QSettings>
 #include <QTreeView>
+#include <QShortcut>
 #include "MainWindow.h"
 #include "FilePanel.h"
 #include "FilePluginInterface.h"
 #include "FileOperations.h"
-
+#include "ShortcutManager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -25,12 +26,11 @@ MainWindow::MainWindow(QWidget *parent)
     , rightPanel(nullptr)
     , currentActiveView(nullptr)
 {
-
+    m_shortcutManager = new ShortcutManager(this);
+    
     createPluginToolbar();
     setupUi();
     loadPlugins();
-
-
 
     QSettings settings("BelkinSoft", "BelkinCommander");
 
@@ -720,3 +720,17 @@ QString MainWindow::currentDirectory() const
     }
     return {};
 }
+
+QShortcut* MainWindow::registerShortcut(const QKeySequence& seq,
+                                        QObject* owner,
+                                        const char* slot)
+{
+    return m_shortcutManager->registerShortcut(seq, owner, slot);
+}
+
+void MainWindow::unregisterShortcuts(QObject* owner)
+{
+    m_shortcutManager->unregisterShortcuts(owner);
+}
+
+
