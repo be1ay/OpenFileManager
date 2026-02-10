@@ -45,8 +45,9 @@ bool FileOperations::copyDirectoryRecursively(const QString &srcPath,
 
             if (QFile::exists(dstFile))
                 QFile::remove(dstFile);
-
-            if (!copyFileWithProgress(srcFile, dstFile, fileIndex, api))
+            
+            QString error;
+            if (!copyFileWithProgress(srcFile, dstFile, fileIndex, api, &error))
                 return false;
 
             fileIndex++;
@@ -59,7 +60,7 @@ bool FileOperations::copyDirectoryRecursively(const QString &srcPath,
 bool FileOperations::copyFileWithProgress(const QString &srcFile,
                                           const QString &dstFile,
                                           int fileIndex,
-                                          ApplicationAPI *api)
+                                          ApplicationAPI *api, QString *error)
 {
     QFile in(srcFile);
     if (!in.open(QIODevice::ReadOnly))
@@ -89,8 +90,11 @@ bool FileOperations::copyFileWithProgress(const QString &srcFile,
         if (read == 0)
             break;
 
-        if (out.write(buffer.constData(), read) != read)
+        if (out.write(buffer.constData(), read) != read){
+            qWarning() << "Write error:" << out.errorString();
+            if (error) *error = out.errorString();
             return false;
+        }
 
         copied += read;
 
@@ -103,8 +107,21 @@ bool FileOperations::copyFileWithProgress(const QString &srcFile,
             emit sig->copyProgress(fileIndex, copied, total, speedMB);
     }
 
-    out.flush();
+    if (!out.flush())
+    {
+        qWarning() << "Flush error:" << out.errorString();
+        if (error) *error = out.errorString();
+        return false;
+    }
+
     out.close();
+    if (out.error() != QFile::NoError)
+    {
+        qWarning() << "Close error:" << out.errorString();
+        if (error) *error = out.errorString();
+        return false;
+    }
+
     in.close();
 
     QFile::remove(dstFile);               // если перезапись
@@ -141,16 +158,17 @@ bool FileOperations::copyFilesSync(const QStringList &srcFiles,
 
 
         bool ok = false;
-
+        QString error;
         if (info.isDir()) {
             ok = copyDirectoryRecursively(srcPath, dstPath, api, fileIndex);
         } else {
-            ok = copyFileWithProgress(srcPath, dstPath, fileIndex, api);
+            
+            ok = copyFileWithProgress(srcPath, dstPath, fileIndex, api, &error);
         }
 
         if (!ok) {
             if (sig) {
-                sig->copyError(srcPath);
+                sig->copyError(srcPath, error);
                 sig->copyFinished();
             }
             return false;
@@ -546,16 +564,16 @@ bool FileOperations::moveFilesSync(const QStringList &srcFiles,
         QString dstPath   = dstDir + "/" + finalName;
 
         bool ok = false;
-
+        QString error;
         if (info.isDir()) {
             ok = copyDirectoryRecursively(srcPath, dstPath, api, fileIndex);
         } else {
-            ok = copyFileWithProgress(srcPath, dstPath, fileIndex, api);
+            ok = copyFileWithProgress(srcPath, dstPath, fileIndex, api, &error);
         }
 
         if (!ok) {
             if (sig) {
-                sig->copyError(srcPath);
+                sig->copyError(srcPath, error);
                 sig->copyFinished();
             }
             return false;

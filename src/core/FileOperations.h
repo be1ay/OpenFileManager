@@ -17,7 +17,7 @@ public:
     static bool copyFileWithProgress(const QString &srcFile,
                                      const QString &dstFile,
                                      int fileIndex,
-                                     ApplicationAPI *api);
+                                     ApplicationAPI *api, QString *error);
 
     static bool removePaths(const QStringList &paths, bool permanent);
     static bool removePath(const QString &path);

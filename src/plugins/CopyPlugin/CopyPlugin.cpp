@@ -3,6 +3,7 @@
 #include "CopySignals.h"
 
 #include <QDebug>
+#include <QMessageBox>
 
 void CopyPlugin::initialize()
 {
@@ -74,10 +75,12 @@ void CopyPlugin::onCopyFinished()
     }
 }
 
-void CopyPlugin::onCopyError(const QString &path)
+void CopyPlugin::onCopyError(const QString &path, const QString &error)
 {
-    qDebug() << "[CopyPlugin] Copy error:" << path;
+    qDebug() << "[CopyPlugin] Copy error:" << path<<" "<< error;
 
-    if (m_dialog)
-        m_dialog->showError("Failed to copy:\n" + path);
+    //if (m_dialog)
+    //    m_dialog->showError("Failed to copy:\n" + path);
+
+    QMessageBox::critical(m_api->mainWindow(), tr("Copy error"), tr("Failed to copy:\n") + path + tr("\n\nError:\n") + error);
 }
