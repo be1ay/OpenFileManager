@@ -23,7 +23,7 @@ target_link_libraries(FileOperationsBtn
 # Задаём префикс и суффикс для плагина, как требует Qt
 set_target_properties(FileOperationsBtn PROPERTIES
     PREFIX ""
-    OUTPUT_NAME "FileOperationsBtn"
+    OUTPUT_NAME "fileOperationsBtn"
    # SUFFIX ".dll"       # Windows
 )
 

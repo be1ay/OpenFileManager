@@ -1,4 +1,4 @@
-# BelkinCommander
+# Belkin Commander
 [![C++ CI](https://github.com/be1ay/OpenFileManager/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/be1ay/OpenFileManager/actions/workflows/release.yml)
 
 Кроссплатформенный файловый менеджер, вдохновлённый классическими инструментами вроде Total Commander.
@@ -60,6 +60,8 @@
 - CopyPlugin - плагин отображающий прогресс бар при копировании.
 
 - FileOperationsBtn - плагин добавляющий кнопки операций.
+
+- DuplicateFinder - плагин для поиска дубликатов файлов
 
 - ExamplePlugin — демонстрация API.
 
