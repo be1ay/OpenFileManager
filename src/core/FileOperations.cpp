@@ -8,12 +8,42 @@
 #include "ApplicationAPI.h"
 #include "CopyWorkerCore.h"
 
+static QString normalizePath(const QString &path)
+{
+    QString p = QDir(path).absolutePath();
+    p = QDir::cleanPath(p);
 
+    // Приводим слэши к нативному виду
+    p = QDir::toNativeSeparators(p);
+
+#ifdef Q_OS_WIN
+    // Windows: регистр не важен
+    p = p.toLower();
+#endif
+
+    // Убираем завершающий слэш, если он есть
+    if (p.endsWith(QDir::separator()))
+        p.chop(1);
+
+    return p;
+}
 bool FileOperations::copyDirectoryRecursively(const QString &srcPath,
                                               const QString &dstPath,
                                               ApplicationAPI *api,
                                               int &fileIndex)
 {
+    // 1. Нормализуем пути
+    QString srcRoot = normalizePath(srcPath);
+    QString dstRoot = normalizePath(dstPath);
+
+    QString sep = QDir::separator();
+
+    if (dstRoot == srcRoot || dstRoot.startsWith(srcRoot + sep))
+    {
+        qWarning() << "ERROR: dstPath is inside srcPath — recursion prevented!";
+        return false;
+    }
+
     QDir sourceDir(srcPath);
     if (!sourceDir.exists())
         return false;
@@ -35,13 +65,23 @@ bool FileOperations::copyDirectoryRecursively(const QString &srcPath,
         QString finalName = FileOperations::uniqueNameInDir(dstPath, baseName);
         QString dstFile = dstPath + "/" + finalName;
 
+        if (entry.isSymLink())
+        {
+            // Копируем симлинк как симлинк
+            QString linkTarget = QFileInfo(srcFile).symLinkTarget();
+            if (!QFile::link(linkTarget, dstFile))
+                return false;
+            continue;
+        }
 
-        if (entry.isDir()) {
+        if (entry.isDir())
+        {
 
             if (!copyDirectoryRecursively(srcFile, dstFile, api, fileIndex))
                 return false;
-
-        } else {
+        }
+        else
+        {
 
             if (QFile::exists(dstFile))
                 QFile::remove(dstFile);
@@ -411,6 +451,14 @@ bool FileOperations::removeDirectoryRecursively(const QString &path)
         dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
 
     for (const QFileInfo &entry : entries) {
+        
+        if (entry.isSymLink())
+        { // Просто удаляем симлинк, не заходим внутрь
+            if (!QFile::remove(entry.absoluteFilePath()))
+                return false;
+            continue;
+        }
+
         if (entry.isDir()) {
             if (!removeDirectoryRecursively(entry.absoluteFilePath()))
                 return false;
