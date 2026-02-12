@@ -14,6 +14,8 @@
 #include <QSettings>
 #include <QTreeView>
 #include <QShortcut>
+#include <QMimeData>
+#include <QClipboard>
 #include "MainWindow.h"
 #include "FilePanel.h"
 #include "FilePluginInterface.h"
@@ -396,9 +398,26 @@ void MainWindow::showContextMenu(const QPoint &globalPos)
 {
     QMenu menu;
 
-    // системные действия (если нужны)
-    // menu.addAction("Открыть", ...);
+    // Проверяем, есть ли выделенные элементы
+    QStringList selected = selectedFiles();
+    bool hasFilesSelected = !selected.isEmpty();
 
+    // Добавляем Copy, если есть выделенные файлы
+    if (hasFilesSelected) {
+        QAction *copyAction = new QAction(tr("Copy"), &menu);
+        connect(copyAction, &QAction::triggered, this, &MainWindow::onCopyToBuffer);
+        menu.addAction(copyAction);
+    }
+
+    const QMimeData *mime = QApplication::clipboard()->mimeData();
+
+    if (mime->hasUrls()) {
+        QAction *pasteAction = new QAction(tr("Paste"), &menu);
+        connect(pasteAction, &QAction::triggered, this, &MainWindow::onPasteFromBuffer);
+        menu.addAction(pasteAction);
+    }
+    
+    menu.addSeparator();
     // действия плагинов
     for (QAction *act : m_contextActions) {
         menu.addAction(act);
@@ -631,32 +650,56 @@ void MainWindow::onCopyDropped(const QStringList &srcPaths, const QString &dstDi
 
 void MainWindow::onCopyToBuffer()
 {
-    m_copyBuffer = selectedFiles();
-    if (m_copyBuffer.isEmpty()) {
+    QStringList files = selectedFiles();
+    if (files.isEmpty()) {
         showMessage("Nothing to copy.");
         return;
     }
+    qDebug()<<files.join(" ");
 
-    //showMessage(QString("Copied %1 item(s) to buffer.").arg(m_copyBuffer.size()));
+
+    auto *mime = new QMimeData();
+    QList<QUrl> urls;
+
+    for (const QString &path : files)
+        urls << QUrl::fromLocalFile(path);
+
+    mime->setUrls(urls);
+
+    QApplication::clipboard()->setMimeData(mime);
+
+    //showMessage(QString("Copied %1 item(s).").arg(files.size()));
 }
 
 void MainWindow::onPasteFromBuffer()
 {
-    if (m_copyBuffer.isEmpty()) {
-        showMessage("Copy buffer is empty.");
+    const QMimeData *mime = QApplication::clipboard()->mimeData();
+
+    if (!mime->hasUrls()) {
+        showMessage("Clipboard does not contain files.");
         return;
     }
+
+    QList<QUrl> urls = mime->urls();
+    if (urls.isEmpty()) {
+        showMessage("Clipboard is empty.");
+        return;
+    }
+
+    QStringList files;
+    for (const QUrl &url : urls)
+        files << url.toLocalFile();
 
     auto *dstView  = qobject_cast<QTreeView*>(activeView());
     auto *dstModel = qobject_cast<QFileSystemModel*>(dstView->model());
 
     QString dstDir = dstModel->filePath(dstView->rootIndex());
 
-    FileOperations::copyFilesAsync(m_copyBuffer, dstDir, this);
+    FileOperations::copyFilesAsync(files, dstDir, this);
 
-    // обновить панель
     dstView->setRootIndex(dstModel->index(dstDir));
 }
+
 void MainWindow::performMoveOperation()
 {
     auto *srcView  = qobject_cast<QTreeView*>(activeView());
@@ -732,5 +775,3 @@ void MainWindow::unregisterShortcuts(QObject* owner)
 {
     m_shortcutManager->unregisterShortcuts(owner);
 }
-
-
