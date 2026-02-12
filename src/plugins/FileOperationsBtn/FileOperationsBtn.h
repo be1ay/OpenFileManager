@@ -33,12 +33,14 @@ private slots:
     void onMove();
     void onDelete();
     void onNewFolder();
+    void onRename();
 
 private:
     ApplicationAPI *m_api = nullptr;
 
-     QPushButton        *copyBtn;
-     QPushButton        *moveBtn;
-     QPushButton        *deleteBtn;
-     QPushButton        *newFolderBtn;
+    QPushButton        *renameBtn_;
+    QPushButton        *copyBtn_;
+    QPushButton        *moveBtn_;
+    QPushButton        *deleteBtn_;
+    QPushButton        *newFolderBtn_;
 };

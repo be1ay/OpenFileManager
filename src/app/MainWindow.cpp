@@ -405,6 +405,7 @@ void MainWindow::showContextMenu(const QPoint &globalPos)
     // Добавляем Copy, если есть выделенные файлы
     if (hasFilesSelected) {
         QAction *copyAction = new QAction(tr("Copy"), &menu);
+        copyAction->setShortcut(QKeySequence::Copy);
         connect(copyAction, &QAction::triggered, this, &MainWindow::onCopyToBuffer);
         menu.addAction(copyAction);
     }
@@ -413,6 +414,7 @@ void MainWindow::showContextMenu(const QPoint &globalPos)
 
     if (mime->hasUrls()) {
         QAction *pasteAction = new QAction(tr("Paste"), &menu);
+        pasteAction->setShortcut(QKeySequence::Paste);
         connect(pasteAction, &QAction::triggered, this, &MainWindow::onPasteFromBuffer);
         menu.addAction(pasteAction);
     }

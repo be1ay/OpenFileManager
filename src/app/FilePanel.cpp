@@ -169,11 +169,6 @@ void FilePanel::keyPressEvent(QKeyEvent *event)
         return;
     }
 
-    if (event->key() == Qt::Key_F2) {
-        emit renameRequested();
-        return;
-    }
-
     if (event->matches(QKeySequence::Copy))
     { // Ctrl+C
         emit copyToBufferRequested();
