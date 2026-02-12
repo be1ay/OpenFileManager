@@ -133,6 +133,7 @@ void FilePanel::onUpClicked()
     if (dir.cdUp()) {
         m_currentPath = dir.absolutePath();
         m_view->setRootIndex(m_model->index(m_currentPath));
+        m_view->clearSelection();
         m_pathLabel->setText(m_currentPath);
         updateDriveBoxSelection();
         emit pathChanged(m_currentPath);
@@ -144,6 +145,7 @@ void FilePanel::onDriveChanged(const QString &drive)
     m_currentPath = drive;
     qDebug()<<m_currentPath;
     m_view->setRootIndex(m_model->index(drive));
+    m_view->clearSelection();
     m_pathLabel->setText(drive);
     updateDriveBoxSelection();
     emit pathChanged(drive);
@@ -155,6 +157,7 @@ void FilePanel::onItemActivated(const QModelIndex &idx)
     if (QFileInfo(path).isDir()) {
         m_currentPath = path;
         m_view->setRootIndex(m_model->index(path));
+        m_view->clearSelection();
         m_pathLabel->setText(path);
         updateDriveBoxSelection();
         emit pathChanged(path);
