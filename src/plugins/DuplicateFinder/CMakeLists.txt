@@ -30,8 +30,9 @@ target_link_libraries(DuplicateFinder
         Qt6::Widgets
 )
 
-find_package(Boost CONFIG REQUIRED COMPONENTS filesystem system)
-target_link_libraries(DuplicateFinder PRIVATE Boost::filesystem Boost::system)
+find_package(Boost REQUIRED COMPONENTS filesystem)
+target_link_libraries(DuplicateFinder PRIVATE Boost::filesystem)
+target_include_directories(DuplicateFinder PRIVATE ${Boost_INCLUDE_DIRS})
 
 # Задаём префикс и суффикс для плагина, как требует Qt
 set_target_properties(DuplicateFinder PROPERTIES

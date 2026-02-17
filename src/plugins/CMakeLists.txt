@@ -10,7 +10,7 @@ list(APPEND LOCAL_PLUGINS FileOperationsBtn)
 add_subdirectory(CopyPlugin)
 list(APPEND LOCAL_PLUGINS CopyPlugin)
 
-find_package(Boost CONFIG COMPONENTS filesystem system)
+find_package(Boost COMPONENTS filesystem)
 
 if(Boost_FOUND)
     message(STATUS "Boost found — enabling DuplicateFinder plugin")
