@@ -38,7 +38,7 @@ std::vector<DuplicateGroup> findDuplicates(const ScanParams& p)
 
             for (const auto& ex : expaths) {
                 if (p_can == ex ||
-                    (!ex.empty() && p_can.string().find(ex.string() + fs::path::preferred_separator) == 0)) {
+                    (!ex.empty() && p_can.string().find(ex.string() + std::string(1, fs::path::preferred_separator)) == 0)) {
                     excluded = true;
                     break;
                 }
