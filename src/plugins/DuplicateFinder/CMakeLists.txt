@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(DuplicateFinder)
 
 set(CMAKE_CXX_STANDARD 20)
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Concurrent)
 
 set(CMAKE_AUTOMOC ON)
 include_directories(${CMAKE_SOURCE_DIR}/../..)  # путь к интерфейсу
@@ -28,6 +28,7 @@ target_link_libraries(DuplicateFinder
         BelkinCore
         Qt6::Core
         Qt6::Widgets
+        Qt6::Concurrent
 )
 
 find_package(Boost REQUIRED COMPONENTS filesystem)

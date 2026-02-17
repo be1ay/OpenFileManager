@@ -8,6 +8,8 @@
 #include <QInputDialog>
 #include <QLabel>
 #include <QHeaderView>
+#include <QApplication>
+#include <QtConcurrent>
 
 DuplicateFinderDialog::DuplicateFinderDialog(QWidget* parent)
     : QDialog(parent)
@@ -176,6 +178,7 @@ void DuplicateFinderDialog::onRemoveMask()
 
 void DuplicateFinderDialog::onRunSearch()
 {
+    QApplication::setOverrideCursor(Qt::BusyCursor);
     ScanParams p;
 
     for (int i = 0; i < scanDirsList_->count(); ++i)
@@ -192,10 +195,23 @@ void DuplicateFinderDialog::onRunSearch()
     p.blockSize = blockSizeSpin_->value();
     p.algo = algoCombo_->currentText().toStdString();
 
-    auto groups = findDuplicates(p);
+    auto future = QtConcurrent::run([p]()
+                                    { return findDuplicates(p); });
 
-    auto* model = qobject_cast<DuplicateResultModel*>(resultTable_->model());
-    model->setData(groups);
+    auto* watcher = new QFutureWatcher<decltype(findDuplicates(p))>(this);
+
+    connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher]() {
+        // Выключаем курсор
+        QApplication::restoreOverrideCursor();
+
+        auto groups = watcher->future().result();
+        auto* model = qobject_cast<DuplicateResultModel*>(resultTable_->model());
+        model->setData(groups);
+
+        watcher->deleteLater();
+    });
+
+    watcher->setFuture(future);
 }
 
 void DuplicateFinderDialog::onResultDoubleClicked(const QModelIndex& index)
